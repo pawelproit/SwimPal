@@ -37,6 +37,7 @@ android {
     }
     buildFeatures {
         compose = true
+        viewBinding = true
     }
 }
 
@@ -58,6 +59,11 @@ dependencies {
     implementation ("androidx.activity:activity-compose:1.8.0")
     implementation ("androidx.navigation:navigation-compose:2.7.5")
     implementation ("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2")
+    implementation ("androidx.appcompat:appcompat:1.7.0")
+    implementation ("com.google.android.material:material:1.12.0")
+    implementation ("com.google.firebase:firebase-firestore-ktx:25.1.3")
+    implementation ("com.google.firebase:firebase-analytics-ktx:22.4.0")
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
