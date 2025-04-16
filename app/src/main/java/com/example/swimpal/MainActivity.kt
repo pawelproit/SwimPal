@@ -117,7 +117,7 @@ fun WeightScreen(navController: NavController, viewModel: UserInputViewModel) {
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.Center) {
-        Text("Podaj swoją wagę (0–200 kg)")
+        Text("Podaj swoją wagę TEST (0–200 kg)")
         Slider(
             value = weight.toFloat(),
             onValueChange = { weight = it.toInt() },
