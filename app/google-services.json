@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "168976071608",
+    "project_id": "swimpal-acfac",
+    "storage_bucket": "swimpal-acfac.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:168976071608:android:3355da9a5e24fb4ab4ad4d",
+        "android_client_info": {
+          "package_name": "com.example.swimpal"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB3Lq9Ga0ge1X6VMhDfArIDMgc9eCWflCg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
