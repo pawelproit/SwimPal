@@ -6,11 +6,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.*
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.swimpal.ui.navigation.MainScreenWithBottomNav
 import com.example.swimpal.ui.screens.LoginScreen
 import com.example.swimpal.ui.screens.MainScreen
 import com.example.swimpal.ui.screens.RegisterScreen
 import com.example.swimpal.viewmodel.AuthState
 import com.example.swimpal.viewmodel.AuthViewModel
+import com.example.swimpal.ui.navigation.MainScreenWithBottomNav
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,7 +43,7 @@ class MainActivity : ComponentActivity() {
                     }
                 )
 
-                "main" -> MainScreen(
+                "main" -> MainScreenWithBottomNav(
                     onLogout = {
                         authViewModel.logout()
                         currentScreen = "login"

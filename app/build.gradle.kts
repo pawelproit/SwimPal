@@ -70,4 +70,10 @@ dependencies {
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-analytics")
 
+    implementation("androidx.navigation:navigation-compose:2.8.3")
+
+    implementation("androidx.compose.material3:material3:1.3.0")
+    
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4")
+
 }

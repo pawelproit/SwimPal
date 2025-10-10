@@ -1,3 +1,8 @@
 <resources>
-    <string name="app_name">SwimPal</string>
+    <string name="app_name">MojaAplikacja</string>
+
+    <string name="main">Główna</string>
+    <string name="training">Trening</string>
+    <string name="generate">Generuj</string>
+    <string name="profile">Profil</string>
 </resources>
