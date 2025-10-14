@@ -76,4 +76,6 @@ dependencies {
     
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4")
 
+    implementation("com.google.firebase:firebase-firestore")
+
 }

@@ -1,20 +1,25 @@
 package com.example.swimpal.ui.navigation
 
 import androidx.compose.runtime.*
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.swimpal.ui.screens.LoginScreen
 import com.example.swimpal.ui.screens.RegisterScreen
+import com.example.swimpal.ui.screens.PersonalDataScreen
 import com.example.swimpal.viewmodel.AuthState
 import com.example.swimpal.viewmodel.AuthViewModel
+import com.example.swimpal.viewmodel.UserProfileViewModel
 
 @Composable
 fun AppNavGraph(
     navController: NavHostController,
-    authViewModel: AuthViewModel
+    authViewModel: AuthViewModel,
+    userProfileViewModel: UserProfileViewModel = viewModel()
 ) {
     val authState by authViewModel.authState.collectAsState()
+    val profileState by userProfileViewModel.profileState.collectAsState()
 
     val startDestination = if (authViewModel.isUserLoggedIn()) "main" else "login"
 
@@ -22,18 +27,12 @@ fun AppNavGraph(
         navController = navController,
         startDestination = startDestination
     ) {
-
         composable("login") {
             LoginScreen(
                 authState = authState,
-                onLogin = { email, password ->
-                    authViewModel.login(email, password)
-                },
-                onNavigateToRegister = {
-                    navController.navigate("register")
-                }
+                onLogin = { email, password -> authViewModel.login(email, password) },
+                onNavigateToRegister = { navController.navigate("register") }
             )
-
             LaunchedEffect(authState) {
                 if (authState is AuthState.Success) {
                     navController.navigate("main") {
@@ -42,7 +41,6 @@ fun AppNavGraph(
                 }
             }
         }
-
         composable("register") {
             RegisterScreen(
                 authState = authState,
@@ -53,16 +51,27 @@ fun AppNavGraph(
                     navController.popBackStack()
                 }
             )
-
             LaunchedEffect(authState) {
                 if (authState is AuthState.Success) {
-                    navController.navigate("main") {
+                    navController.navigate("personalData") {
                         popUpTo("register") { inclusive = true }
                     }
                 }
             }
         }
-
+        composable("personalData") {
+            PersonalDataScreen(
+                profileState = profileState,
+                onSave = { userProfile ->
+                    userProfileViewModel.saveUserProfile(userProfile)
+                },
+                onSuccess = {
+                    navController.navigate("main") {
+                        popUpTo("personalData") { inclusive = true }
+                    }
+                }
+            )
+        }
         composable("main") {
             MainScreenWithBottomNav(
                 onLogout = {
@@ -73,5 +82,6 @@ fun AppNavGraph(
                 }
             )
         }
+
     }
 }

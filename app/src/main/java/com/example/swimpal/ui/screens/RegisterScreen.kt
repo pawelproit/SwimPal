@@ -9,7 +9,6 @@ import androidx.compose.ui.unit.dp
 import com.example.swimpal.viewmodel.AuthState
 import androidx.compose.ui.Alignment
 
-
 @Composable
 fun RegisterScreen(
     authState: AuthState,
@@ -33,7 +32,6 @@ fun RegisterScreen(
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(Modifier.height(16.dp))
-
         TextField(
             value = password,
             onValueChange = { password = it },
@@ -43,7 +41,6 @@ fun RegisterScreen(
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(Modifier.height(16.dp))
-
         TextField(
             value = confirmPassword,
             onValueChange = { confirmPassword = it },
@@ -62,7 +59,7 @@ fun RegisterScreen(
         }
         Spacer(Modifier.height(24.dp))
 
-        when(authState) {
+        when (authState) {
             is AuthState.Loading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
             else -> Button(
                 onClick = {

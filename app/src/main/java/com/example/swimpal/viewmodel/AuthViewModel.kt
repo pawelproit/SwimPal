@@ -1,11 +1,9 @@
 package com.example.swimpal.viewmodel
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 
 sealed class AuthState {
     object Idle : AuthState()
@@ -37,6 +35,7 @@ class AuthViewModel : ViewModel() {
         auth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
+                    // Sukces rejestracji – przejdzie na PersonalDataScreen w nawigacji
                     _authState.value = AuthState.Success("Zarejestrowano pomyślnie")
                 } else {
                     _authState.value = AuthState.Error(task.exception?.localizedMessage ?: "Błąd rejestracji")
