@@ -15,9 +15,10 @@ fun TrainingScreen(
     val trainings by trainingViewModel.trainings.collectAsState()
     var errorMsg by remember { mutableStateOf("") }
 
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .padding(16.dp)
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
     ) {
         Text("Ekran Treningów", style = MaterialTheme.typography.titleLarge)
         Spacer(modifier = Modifier.height(16.dp))
@@ -25,9 +26,10 @@ fun TrainingScreen(
             Text("Brak zapisanych treningów")
         } else {
             trainings.forEach { training ->
-                Card(modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp)
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
                         Text(

@@ -8,12 +8,16 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.swimpal.viewmodel.TrainingViewModel
 
 @Composable
-fun GeneratedTrainingScreen() {
+fun GeneratedTrainingScreen(trainingViewModel: TrainingViewModel = viewModel()) {
     var selectedType by remember { mutableStateOf("Sprinty") }
     var selectedDifficulty by remember { mutableStateOf(1) }
     var selectedDays by remember { mutableStateOf(3) }
+    var errorMsg by remember { mutableStateOf("") }
+    var infoMsg by remember { mutableStateOf("") }
 
     val trainingTypes = listOf("Sprinty", "Triathlon", "Open Water", "Technika")
 
@@ -21,7 +25,15 @@ fun GeneratedTrainingScreen() {
         bottomBar = {
             Button(
                 onClick = {
-                    // TODO: Dodaj logikę generowania treningu
+                    infoMsg = ""
+                    errorMsg = ""
+                    trainingViewModel.generateAndSaveTraining(
+                        type = selectedType,
+                        difficulty = selectedDifficulty,
+                        days = selectedDays,
+                        onSuccess = { infoMsg = "Wygenerowano i zapisano trening!" },
+                        onError = { errorMsg = it.message ?: "Błąd zapisu treningu" }
+                    )
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -92,6 +104,9 @@ fun GeneratedTrainingScreen() {
                 steps = 4
             )
             Text("Wybrano dni: $selectedDays")
+
+            if (infoMsg.isNotEmpty()) Text(infoMsg, color = MaterialTheme.colorScheme.primary)
+            if (errorMsg.isNotEmpty()) Text(errorMsg, color = MaterialTheme.colorScheme.error)
         }
     }
 }
