@@ -21,92 +21,97 @@ fun GeneratedTrainingScreen(trainingViewModel: TrainingViewModel = viewModel()) 
 
     val trainingTypes = listOf("Sprinty", "Triathlon", "Open Water", "Technika")
 
-    Scaffold(
-        bottomBar = {
-            Button(
-                onClick = {
-                    infoMsg = ""
-                    errorMsg = ""
-                    trainingViewModel.generateAndSaveTraining(
-                        type = selectedType,
-                        difficulty = selectedDifficulty,
-                        days = selectedDays,
-                        onSuccess = { infoMsg = "Wygenerowano i zapisano trening!" },
-                        onError = { errorMsg = it.message ?: "Błąd zapisu treningu" }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        Spacer(modifier = Modifier.height(12.dp))
+        Text(
+            text = "Generowanie Treningu",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+        Text("Typ treningu:", style = MaterialTheme.typography.titleSmall)
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                trainingTypes.take(2).forEach { type ->
+                    FilterChip(
+                        selected = selectedType == type,
+                        onClick = { selectedType = type },
+                        label = { Text(type) }
                     )
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
+                }
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text("Generuj trening")
+                trainingTypes.drop(2).forEach { type ->
+                    FilterChip(
+                        selected = selectedType == type,
+                        onClick = { selectedType = type },
+                        label = { Text(type) }
+                    )
+                }
             }
         }
-    ) { padding ->
-        Column(
+
+        Spacer(modifier = Modifier.height(16.dp))
+        Text("Poziom trudności (1–3):", style = MaterialTheme.typography.titleSmall)
+        Slider(
+            value = selectedDifficulty.toFloat(),
+            onValueChange = { selectedDifficulty = it.toInt() },
+            valueRange = 1f..3f,
+            steps = 1
+        )
+        Text("Wybrany poziom: $selectedDifficulty")
+
+        Spacer(modifier = Modifier.height(16.dp))
+        Text("Ilość dni treningowych (1–6):", style = MaterialTheme.typography.titleSmall)
+        Slider(
+            value = selectedDays.toFloat(),
+            onValueChange = { selectedDays = it.toInt() },
+            valueRange = 1f..6f,
+            steps = 4
+        )
+        Text("Wybrano dni: $selectedDays")
+
+        if (infoMsg.isNotEmpty()) {
+            Text(infoMsg, color = MaterialTheme.colorScheme.primary)
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+        if (errorMsg.isNotEmpty()) {
+            Text(errorMsg, color = MaterialTheme.colorScheme.error)
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
+        Spacer(modifier = Modifier.height(36.dp))
+
+        Button(
+            onClick = {
+                infoMsg = ""
+                errorMsg = ""
+                trainingViewModel.generateAndSaveTraining(
+                    type = selectedType,
+                    difficulty = selectedDifficulty,
+                    days = selectedDays,
+                    onSuccess = { infoMsg = "Wygenerowano i zapisano trening!" },
+                    onError = { errorMsg = it.message ?: "Błąd zapisu treningu" }
+                )
+            },
             modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 16.dp, vertical = 8.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .fillMaxWidth()
+                .padding(vertical = 24.dp)
         ) {
-            Text(
-                text = "Generowanie Treningu",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
-
-            Text("Typ treningu:", style = MaterialTheme.typography.titleSmall)
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    trainingTypes.take(2).forEach { type ->
-                        FilterChip(
-                            selected = selectedType == type,
-                            onClick = { selectedType = type },
-                            label = { Text(type) }
-                        )
-                    }
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    trainingTypes.drop(2).forEach { type ->
-                        FilterChip(
-                            selected = selectedType == type,
-                            onClick = { selectedType = type },
-                            label = { Text(type) }
-                        )
-                    }
-                }
-            }
-
-            Text("Poziom trudności (1–3):", style = MaterialTheme.typography.titleSmall)
-            Slider(
-                value = selectedDifficulty.toFloat(),
-                onValueChange = { selectedDifficulty = it.toInt() },
-                valueRange = 1f..3f,
-                steps = 1
-            )
-            Text("Wybrany poziom: $selectedDifficulty")
-
-            Text("Ilość dni treningowych (1–6):", style = MaterialTheme.typography.titleSmall)
-            Slider(
-                value = selectedDays.toFloat(),
-                onValueChange = { selectedDays = it.toInt() },
-                valueRange = 1f..6f,
-                steps = 4
-            )
-            Text("Wybrano dni: $selectedDays")
-
-            if (infoMsg.isNotEmpty()) Text(infoMsg, color = MaterialTheme.colorScheme.primary)
-            if (errorMsg.isNotEmpty()) Text(errorMsg, color = MaterialTheme.colorScheme.error)
+            Text("Generuj trening")
         }
+        Spacer(modifier = Modifier.height(36.dp))
     }
 }
