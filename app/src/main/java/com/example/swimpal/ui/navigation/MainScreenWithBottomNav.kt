@@ -57,7 +57,7 @@ fun MainScreenWithBottomNav(
             modifier = Modifier.padding(paddingValues)
         ) {
             composable(BottomNavItem.Main.route) {
-                MainScreen(onLogout = onLogout)
+                MainScreen()
             }
             composable(BottomNavItem.Training.route) {
                 TrainingScreen()
@@ -66,7 +66,7 @@ fun MainScreenWithBottomNav(
                 GenerateScreen()
             }
             composable(BottomNavItem.Profile.route) {
-                ProfileScreen()
+                ProfileScreen(onLogout = onLogout)
             }
         }
     }

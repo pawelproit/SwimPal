@@ -7,9 +7,9 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material.icons.filled.Star
@@ -31,14 +31,14 @@ import com.example.swimpal.viewmodel.UserProfileViewModel
 import com.example.swimpal.viewmodel.TrainingViewModel
 import kotlinx.coroutines.launch
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import com.example.swimpal.model.UserProfile
 
 @Composable
 fun ProfileScreen(
     userProfileViewModel: UserProfileViewModel = viewModel(),
-    trainingViewModel: TrainingViewModel = viewModel()
+    trainingViewModel: TrainingViewModel = viewModel(),
+    onLogout: () -> Unit
 ) {
     val profileState by userProfileViewModel.profileState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -54,7 +54,7 @@ fun ProfileScreen(
 
     LaunchedEffect(Unit) {
         userProfileViewModel.loadUserProfile()
-        trainingViewModel.fetchHistoryTrainings()  // fetch history trainings on load
+        trainingViewModel.fetchHistoryTrainings()
     }
 
     LaunchedEffect(profileState) {
@@ -78,134 +78,143 @@ fun ProfileScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         modifier = Modifier.fillMaxSize()
     ) { innerPadding ->
-        LazyColumn(
+        Column(
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.Top,
-            contentPadding = PaddingValues(bottom = 16.dp)
         ) {
-            item {
-                Text("Twój profil", style = MaterialTheme.typography.headlineMedium)
-                Spacer(modifier = Modifier.height(16.dp))
-            }
+            LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(16.dp)
+                    .fillMaxWidth(),
+                verticalArrangement = Arrangement.Top,
+                contentPadding = PaddingValues(bottom = 16.dp)
+            ) {
+                item {
+                    Text("Twój profil", style = MaterialTheme.typography.headlineMedium)
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+                item {
+                    ExpandableCard(
+                        title = "Dane",
+                        expanded = expandedData,
+                        onToggle = { expandedData = !expandedData }
+                    ) {
+                        when (profileState) {
+                            is ProfileState.Loading -> Box(
+                                modifier = Modifier.fillMaxWidth(),
+                                contentAlignment = Alignment.Center
+                            ) { CircularProgressIndicator() }
 
-            item {
-                ExpandableCard(
-                    title = "Dane",
-                    expanded = expandedData,
-                    onToggle = { expandedData = !expandedData }
-                ) {
-                    when (profileState) {
-                        is ProfileState.Loading -> Box(
-                            modifier = Modifier.fillMaxWidth(),
-                            contentAlignment = Alignment.Center
-                        ) { CircularProgressIndicator() }
+                            is ProfileState.Success -> {
+                                val profile = (profileState as ProfileState.Success).userProfile
+                                ProfileUserDataSection(
+                                    profile = profile,
+                                    onProfileChanged = { userProfileViewModel.saveUserProfile(it) }
+                                )
+                            }
 
-                        is ProfileState.Success -> {
-                            val profile = (profileState as ProfileState.Success).userProfile
-                            ProfileUserDataSection(
-                                profile = profile,
-                                onProfileChanged = { userProfileViewModel.saveUserProfile(it) }
+                            is ProfileState.Error -> Text(
+                                "Błąd: ${(profileState as ProfileState.Error).error}",
+                                color = MaterialTheme.colorScheme.error
                             )
-                        }
 
-                        is ProfileState.Error -> Text(
-                            "Błąd: ${(profileState as ProfileState.Error).error}",
-                            color = MaterialTheme.colorScheme.error
+                            else -> Text("Brak danych profilu.")
+                        }
+                    }
+                }
+                item {
+                    ExpandableCard(
+                        title = "Odznaki",
+                        expanded = expandedBadges,
+                        onToggle = { expandedBadges = !expandedBadges }
+                    ) {
+                        when (profileState) {
+                            is ProfileState.Success -> {
+                                val profile = (profileState as ProfileState.Success).userProfile
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text("Statystyki", style = MaterialTheme.typography.titleSmall)
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Row {
+                                    Text("Custom: ${profile.customCount}", modifier = Modifier.weight(1f))
+                                    Text("Generowane: ${profile.generatedCount}", modifier = Modifier.weight(1f))
+                                }
+                                Row {
+                                    Text("Wszystkie: ${profile.totalCount}", modifier = Modifier.weight(1f))
+                                    Text("Dni w app: ${profile.activeDays}", modifier = Modifier.weight(1f))
+                                }
+                                Spacer(modifier = Modifier.height(12.dp))
+                                BadgeCategoryScrollable("Customowe", profile.badges.filter { it.name.startsWith("Custom") })
+                                BadgeCategoryScrollable("Generowane", profile.badges.filter { it.name.startsWith("Generated") })
+                                BadgeCategoryScrollable("Wszystkie", profile.badges.filter { it.name.startsWith("Total") })
+                                BadgeCategoryScrollable("Dni aktywności", profile.badges.filter { it.name.startsWith("Days") })
+                            }
+
+                            else -> Text("Brak danych odznak.")
+                        }
+                    }
+                }
+                item {
+                    ExpandableCard(
+                        title = "Wideo",
+                        expanded = expandedVideo,
+                        onToggle = { expandedVideo = !expandedVideo }
+                    ) {
+                        LocalVideoPlayer(
+                            resId = com.example.swimpal.R.raw.instruktaz,
+                            title = "Instruktaż pływania – 18 minut",
+                            modifier = Modifier.padding(top = 4.dp)
                         )
-
-                        else -> Text("Brak danych profilu.")
                     }
                 }
-            }
-
-            item {
-                ExpandableCard(
-                    title = "Odznaki",
-                    expanded = expandedBadges,
-                    onToggle = { expandedBadges = !expandedBadges }
-                ) {
-                    when (profileState) {
-                        is ProfileState.Success -> {
-                            val profile = (profileState as ProfileState.Success).userProfile
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Text("Statystyki", style = MaterialTheme.typography.titleSmall)
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Row {
-                                Text("Custom: ${profile.customCount}", modifier = Modifier.weight(1f))
-                                Text("Generowane: ${profile.generatedCount}", modifier = Modifier.weight(1f))
-                            }
-                            Row {
-                                Text("Wszystkie: ${profile.totalCount}", modifier = Modifier.weight(1f))
-                                Text("Dni w app: ${profile.activeDays}", modifier = Modifier.weight(1f))
-                            }
-                            Spacer(modifier = Modifier.height(12.dp))
-                            BadgeCategoryScrollable("Customowe", profile.badges.filter { it.name.startsWith("Custom") })
-                            BadgeCategoryScrollable("Generowane", profile.badges.filter { it.name.startsWith("Generated") })
-                            BadgeCategoryScrollable("Wszystkie", profile.badges.filter { it.name.startsWith("Total") })
-                            BadgeCategoryScrollable("Dni aktywności", profile.badges.filter { it.name.startsWith("Days") })
-                        }
-
-                        else -> Text("Brak danych odznak.")
-                    }
-                }
-            }
-
-            item {
-                ExpandableCard(
-                    title = "Wideo",
-                    expanded = expandedVideo,
-                    onToggle = { expandedVideo = !expandedVideo }
-                ) {
-                    LocalVideoPlayer(
-                        resId = com.example.swimpal.R.raw.instruktaz,
-                        title = "Instruktaż pływania – 18 minut",
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
-                }
-            }
-
-            item {
-                ExpandableCard(
-                    title = "Historia treningów",
-                    expanded = expandedHistory,
-                    onToggle = { expandedHistory = !expandedHistory }
-                ) {
-                    if (historyTrainings.isEmpty()) {
-                        Text("Brak historii treningów")
-                    } else {
-                        historyTrainings.forEach { training ->
-                            Column(modifier = Modifier.padding(vertical = 8.dp)) {
-                                Text(
-                                    text = training.name,
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                                Text(
-                                    text = "Ukończono: ${training.completedDate}",
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                                Text(
-                                    text = "Ocena: ${training.rating}",
-                                    style = MaterialTheme.typography.bodySmall
-                                )
-                                if (!training.note.isNullOrBlank()) {
+                item {
+                    ExpandableCard(
+                        title = "Historia treningów",
+                        expanded = expandedHistory,
+                        onToggle = { expandedHistory = !expandedHistory }
+                    ) {
+                        if (historyTrainings.isEmpty()) {
+                            Text("Brak historii treningów")
+                        } else {
+                            historyTrainings.forEach { training ->
+                                Column(modifier = Modifier.padding(vertical = 8.dp)) {
                                     Text(
-                                        text = "Notatka: ${training.note}",
+                                        text = training.name,
+                                        style = MaterialTheme.typography.titleMedium
+                                    )
+                                    Text(
+                                        text = "Ukończono: ${training.completedDate}",
                                         style = MaterialTheme.typography.bodySmall
                                     )
+                                    Text(
+                                        text = "Ocena: ${training.rating}",
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                    if (!training.note.isNullOrBlank()) {
+                                        Text(
+                                            text = "Notatka: ${training.note}",
+                                            style = MaterialTheme.typography.bodySmall
+                                        )
+                                    }
+                                    Divider(modifier = Modifier.padding(vertical = 8.dp))
                                 }
-                                Divider(modifier = Modifier.padding(vertical = 8.dp))
                             }
                         }
                     }
                 }
+            }
+            Button(
+                onClick = onLogout,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                Text("Wyloguj się")
             }
         }
     }
 }
-
 
 @Composable
 private fun ExpandableCard(
