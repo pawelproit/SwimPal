@@ -39,10 +39,10 @@ class TrainingViewModel : ViewModel() {
                     )
                 }
             )
-        }
+        },
+        "creationDate" to training.creationDate
     )
 
-    // NOWA - aktualizacja licznika customCount, totalCount i trainingDates
     private fun incrementCustomCountAndDays(onComplete: () -> Unit) {
         val u = user ?: return
         val userDoc = db.collection("users").document(u.uid)
@@ -68,7 +68,6 @@ class TrainingViewModel : ViewModel() {
         }
     }
 
-    // NOWA - analogiczna dla generatedCount
     private fun incrementGeneratedCountAndDays(onComplete: () -> Unit) {
         val u = user ?: return
         val userDoc = db.collection("users").document(u.uid)
@@ -105,7 +104,8 @@ class TrainingViewModel : ViewModel() {
             onError(Exception("Nie zalogowano użytkownika"))
             return
         }
-        val training = Training(name = trainingName, days = days)
+        val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        val training = Training(name = trainingName, days = days, creationDate = today)
         db.collection("users")
             .document(u.uid)
             .collection("custom_trainings")
@@ -127,7 +127,8 @@ class TrainingViewModel : ViewModel() {
             onError(Exception("Nie zalogowano użytkownika"))
             return
         }
-        val training = Training(name = trainingName, days = days)
+        val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        val training = Training(name = trainingName, days = days, creationDate = today)
         db.collection("users")
             .document(u.uid)
             .collection("generated_trainings")
@@ -170,7 +171,8 @@ class TrainingViewModel : ViewModel() {
                         Training(
                             id = doc.id,
                             name = map["name"] as? String ?: "",
-                            days = days
+                            days = days,
+                            creationDate = map["creationDate"] as? String ?: "" // POBIERANIE DATY
                         )
                     }
                     _customTrainings.value = trainings
@@ -210,7 +212,8 @@ class TrainingViewModel : ViewModel() {
                         Training(
                             id = doc.id,
                             name = map["name"] as? String ?: "",
-                            days = days
+                            days = days,
+                            creationDate = map["creationDate"] as? String ?: "" // POBIERANIE DATY
                         )
                     }
                     _generatedTrainings.value = trainings
@@ -248,6 +251,18 @@ class TrainingViewModel : ViewModel() {
             }
             .addOnFailureListener { e -> onError(e) }
     }
+
+    fun deleteTraining(trainingId: String, collection: String, onSuccess: () -> Unit, onError: (Exception) -> Unit) {
+        val u = user ?: return
+        db.collection("users")
+            .document(u.uid)
+            .collection(collection)
+            .document(trainingId)
+            .delete()
+            .addOnSuccessListener { onSuccess() }
+            .addOnFailureListener { e -> onError(e) }
+    }
+
 
     fun generateAndSaveTraining(
         type: String,
