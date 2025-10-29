@@ -7,9 +7,9 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material.icons.filled.Star
@@ -25,26 +25,36 @@ import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import com.example.swimpal.model.Badge
-import com.example.swimpal.model.UserProfile
+import com.example.swimpal.model.Training
 import com.example.swimpal.viewmodel.ProfileState
 import com.example.swimpal.viewmodel.UserProfileViewModel
+import com.example.swimpal.viewmodel.TrainingViewModel
 import kotlinx.coroutines.launch
 import androidx.compose.ui.viewinterop.AndroidView
-
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import com.example.swimpal.model.UserProfile
 
 @Composable
-fun ProfileScreen(userProfileViewModel: UserProfileViewModel = viewModel()) {
+fun ProfileScreen(
+    userProfileViewModel: UserProfileViewModel = viewModel(),
+    trainingViewModel: TrainingViewModel = viewModel()
+) {
     val profileState by userProfileViewModel.profileState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
     var prevBadges by remember { mutableStateOf<List<Badge>>(emptyList()) }
-    var expandedData by remember { mutableStateOf(true) }
+    var expandedData by remember { mutableStateOf(false) }
     var expandedBadges by remember { mutableStateOf(false) }
     var expandedVideo by remember { mutableStateOf(false) }
+    var expandedHistory by remember { mutableStateOf(false) }
+
+    val historyTrainings by trainingViewModel.historyTrainings.collectAsState(initial = emptyList())
 
     LaunchedEffect(Unit) {
         userProfileViewModel.loadUserProfile()
+        trainingViewModel.fetchHistoryTrainings()  // fetch history trainings on load
     }
 
     LaunchedEffect(profileState) {
@@ -68,91 +78,134 @@ fun ProfileScreen(userProfileViewModel: UserProfileViewModel = viewModel()) {
         snackbarHost = { SnackbarHost(snackbarHostState) },
         modifier = Modifier.fillMaxSize()
     ) { innerPadding ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
                 .padding(16.dp),
-            verticalArrangement = Arrangement.Top
+            verticalArrangement = Arrangement.Top,
+            contentPadding = PaddingValues(bottom = 16.dp)
         ) {
-            Text("Twój profil", style = MaterialTheme.typography.headlineMedium)
-            Spacer(modifier = Modifier.height(16.dp))
+            item {
+                Text("Twój profil", style = MaterialTheme.typography.headlineMedium)
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
-            // --- DANE ---
-            ExpandableCard(
-                title = "Dane",
-                expanded = expandedData,
-                onToggle = { expandedData = !expandedData }
-            ) {
-                when (profileState) {
-                    is ProfileState.Loading -> Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center
-                    ) { CircularProgressIndicator() }
+            item {
+                ExpandableCard(
+                    title = "Dane",
+                    expanded = expandedData,
+                    onToggle = { expandedData = !expandedData }
+                ) {
+                    when (profileState) {
+                        is ProfileState.Loading -> Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) { CircularProgressIndicator() }
 
-                    is ProfileState.Success -> {
-                        val profile = (profileState as ProfileState.Success).userProfile
-                        ProfileUserDataSection(
-                            profile = profile,
-                            onProfileChanged = { userProfileViewModel.saveUserProfile(it) }
+                        is ProfileState.Success -> {
+                            val profile = (profileState as ProfileState.Success).userProfile
+                            ProfileUserDataSection(
+                                profile = profile,
+                                onProfileChanged = { userProfileViewModel.saveUserProfile(it) }
+                            )
+                        }
+
+                        is ProfileState.Error -> Text(
+                            "Błąd: ${(profileState as ProfileState.Error).error}",
+                            color = MaterialTheme.colorScheme.error
                         )
-                    }
 
-                    is ProfileState.Error -> Text(
-                        "Błąd: ${(profileState as ProfileState.Error).error}",
-                        color = MaterialTheme.colorScheme.error
+                        else -> Text("Brak danych profilu.")
+                    }
+                }
+            }
+
+            item {
+                ExpandableCard(
+                    title = "Odznaki",
+                    expanded = expandedBadges,
+                    onToggle = { expandedBadges = !expandedBadges }
+                ) {
+                    when (profileState) {
+                        is ProfileState.Success -> {
+                            val profile = (profileState as ProfileState.Success).userProfile
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text("Statystyki", style = MaterialTheme.typography.titleSmall)
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Row {
+                                Text("Custom: ${profile.customCount}", modifier = Modifier.weight(1f))
+                                Text("Generowane: ${profile.generatedCount}", modifier = Modifier.weight(1f))
+                            }
+                            Row {
+                                Text("Wszystkie: ${profile.totalCount}", modifier = Modifier.weight(1f))
+                                Text("Dni w app: ${profile.activeDays}", modifier = Modifier.weight(1f))
+                            }
+                            Spacer(modifier = Modifier.height(12.dp))
+                            BadgeCategoryScrollable("Customowe", profile.badges.filter { it.name.startsWith("Custom") })
+                            BadgeCategoryScrollable("Generowane", profile.badges.filter { it.name.startsWith("Generated") })
+                            BadgeCategoryScrollable("Wszystkie", profile.badges.filter { it.name.startsWith("Total") })
+                            BadgeCategoryScrollable("Dni aktywności", profile.badges.filter { it.name.startsWith("Days") })
+                        }
+
+                        else -> Text("Brak danych odznak.")
+                    }
+                }
+            }
+
+            item {
+                ExpandableCard(
+                    title = "Wideo",
+                    expanded = expandedVideo,
+                    onToggle = { expandedVideo = !expandedVideo }
+                ) {
+                    LocalVideoPlayer(
+                        resId = com.example.swimpal.R.raw.instruktaz,
+                        title = "Instruktaż pływania – 18 minut",
+                        modifier = Modifier.padding(top = 4.dp)
                     )
-
-                    else -> Text("Brak danych profilu.")
                 }
             }
 
-            // --- ODZNAKI ---
-            ExpandableCard(
-                title = "Odznaki",
-                expanded = expandedBadges,
-                onToggle = { expandedBadges = !expandedBadges }
-            ) {
-                when (profileState) {
-                    is ProfileState.Success -> {
-                        val profile = (profileState as ProfileState.Success).userProfile
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text("Statystyki", style = MaterialTheme.typography.titleSmall)
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Row {
-                            Text("Custom: ${profile.customCount}", modifier = Modifier.weight(1f))
-                            Text("Generowane: ${profile.generatedCount}", modifier = Modifier.weight(1f))
+            item {
+                ExpandableCard(
+                    title = "Historia treningów",
+                    expanded = expandedHistory,
+                    onToggle = { expandedHistory = !expandedHistory }
+                ) {
+                    if (historyTrainings.isEmpty()) {
+                        Text("Brak historii treningów")
+                    } else {
+                        historyTrainings.forEach { training ->
+                            Column(modifier = Modifier.padding(vertical = 8.dp)) {
+                                Text(
+                                    text = training.name,
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                Text(
+                                    text = "Ukończono: ${training.completedDate}",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                                Text(
+                                    text = "Ocena: ${training.rating}",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                                if (!training.note.isNullOrBlank()) {
+                                    Text(
+                                        text = "Notatka: ${training.note}",
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+                                Divider(modifier = Modifier.padding(vertical = 8.dp))
+                            }
                         }
-                        Row {
-                            Text("Wszystkie: ${profile.totalCount}", modifier = Modifier.weight(1f))
-                            Text("Dni w app: ${profile.activeDays}", modifier = Modifier.weight(1f))
-                        }
-                        Spacer(modifier = Modifier.height(12.dp))
-                        BadgeCategoryScrollable("Customowe", profile.badges.filter { it.name.startsWith("Custom") })
-                        BadgeCategoryScrollable("Generowane", profile.badges.filter { it.name.startsWith("Generated") })
-                        BadgeCategoryScrollable("Wszystkie", profile.badges.filter { it.name.startsWith("Total") })
-                        BadgeCategoryScrollable("Dni aktywności", profile.badges.filter { it.name.startsWith("Days") })
                     }
-
-                    else -> Text("Brak danych odznak.")
                 }
-            }
-
-            // --- WIDEO ---
-            ExpandableCard(
-                title = "Wideo",
-                expanded = expandedVideo,
-                onToggle = { expandedVideo = !expandedVideo }
-            ) {
-                LocalVideoPlayer(
-                    resId = com.example.swimpal.R.raw.instruktaz,
-                    title = "Instruktaż pływania – 18 minut",
-                    modifier = Modifier.padding(top = 4.dp)
-                )
             }
         }
     }
 }
+
 
 @Composable
 private fun ExpandableCard(
@@ -190,7 +243,6 @@ private fun ExpandableCard(
     }
 }
 
-// --- KOMPOZYCJA ODTWARZACZA WIDEO (z fullscreen) ---
 @Composable
 fun LocalVideoPlayer(
     resId: Int,
@@ -202,7 +254,6 @@ fun LocalVideoPlayer(
 
     var isFullScreen by remember { mutableStateOf(false) }
 
-    // Tworzenie ExoPlayera
     val exoPlayer = remember {
         ExoPlayer.Builder(context).build().apply {
             val uri = Uri.parse("android.resource://${context.packageName}/$resId")
@@ -211,7 +262,6 @@ fun LocalVideoPlayer(
         }
     }
 
-    // Zwalnianie pamięci
     DisposableEffect(Unit) {
         onDispose { exoPlayer.release() }
     }

@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import java.text.SimpleDateFormat
 import java.util.*
+import com.example.swimpal.model.Training
 
 @Composable
 fun TrainingScreen(
@@ -26,13 +27,18 @@ fun TrainingScreen(
     val customTrainings by trainingViewModel.customTrainings.collectAsState()
     val generatedTrainings by trainingViewModel.generatedTrainings.collectAsState()
     var errorMsg by remember { mutableStateOf("") }
-    val expandedDays = remember { mutableStateMapOf<String, Boolean>() }
-    var opisExpanded by remember { mutableStateOf(false) }
 
-    // ZMIENNE DLA DIALOGU
+    val expandedTrainings = remember { mutableStateMapOf<String, Boolean>() }
+    val expandedDays = remember { mutableStateMapOf<String, Boolean>() }
+
     var showDeleteDialog by remember { mutableStateOf(false) }
     var trainingToDelete by remember { mutableStateOf<Pair<String, String>?>(null) }
-    // Pair<trainingId, collectionName>
+
+    var showCompleteDialog by remember { mutableStateOf(false) }
+    var trainingToComplete by remember { mutableStateOf<Pair<Training, String>?>(null) }
+    var completeRating by remember { mutableStateOf(3) }
+    var completeNote by remember { mutableStateOf("") }
+    var isCompleting by remember { mutableStateOf(false) }
 
     val globalOpis = "Opis zadań: Tutaj znajdziesz wyjaśnienia techniczne, wskazówki i dodatkowe informacje dotyczące wszystkich ćwiczeń, które pojawiają się w treningach. Skup się na technice, oddychaniu, tempie pływania i regeneracji między kolejnymi zadaniami."
 
@@ -60,7 +66,7 @@ fun TrainingScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 8.dp)
-                .clickable { opisExpanded = !opisExpanded }
+                .clickable { expandedTrainings["opis"] = !(expandedTrainings["opis"] ?: false) }
         ) {
             Column(modifier = Modifier.padding(12.dp)) {
                 Text(
@@ -68,7 +74,7 @@ fun TrainingScreen(
                     style = MaterialTheme.typography.titleMedium
                 )
                 AnimatedVisibility(
-                    visible = opisExpanded,
+                    visible = expandedTrainings["opis"] ?: false,
                     enter = expandVertically(),
                     exit = shrinkVertically()
                 ) {
@@ -86,38 +92,67 @@ fun TrainingScreen(
             Text("Brak własnych treningów")
         } else {
             customTrainings.forEach { training ->
+                val expanded = expandedTrainings[training.id] ?: false
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 8.dp)
                 ) {
-                    Box {
-                        Column(modifier = Modifier.padding(12.dp)) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { expandedTrainings[training.id] = !expanded }
+                                .padding(end = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             val date = formatDate(training.creationDate)
                             Text(
-                                "${training.name}" + if(date.isNotBlank()) ", $date" else "",
-                                style = MaterialTheme.typography.titleMedium
+                                text = "${training.name}" + if(date.isNotBlank()) ", $date" else "",
+                                style = MaterialTheme.typography.titleMedium,
+                                modifier = Modifier.weight(1f)
                             )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            training.days.forEachIndexed { idx, day ->
-                                val key = "${training.name}_${day.dayName}"
-                                val expanded = expandedDays[key] ?: false
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable { expandedDays[key] = !expanded }
-                                        .padding(vertical = 4.dp)
-                                ) {
-                                    Text(
-                                        text = "Dzień ${idx + 1}",
-                                        style = MaterialTheme.typography.labelLarge
-                                    )
+                            IconButton(
+                                onClick = {
+                                    trainingToDelete = Pair(training.id, "custom_trainings")
+                                    showDeleteDialog = true
+                                }
+                            ) {
+                                Icon(Icons.Default.Delete, contentDescription = "Usuń trening")
+                            }
+                        }
+                        AnimatedVisibility(
+                            visible = expanded,
+                            enter = expandVertically(),
+                            exit = shrinkVertically()
+                        ) {
+                            Column {
+                                training.days.forEachIndexed { idx, day ->
+                                    val dayKey = "${training.id}_$idx"
+                                    val expandedDay = expandedDays[dayKey] ?: false
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable { expandedDays[dayKey] = !expandedDay }
+                                            .padding(vertical = 4.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = "Dzień ${idx + 1}",
+                                            style = MaterialTheme.typography.labelLarge,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        Text(
+                                            text = if (expandedDay) "▲" else "▼",
+                                            style = MaterialTheme.typography.labelLarge
+                                        )
+                                    }
                                     AnimatedVisibility(
-                                        visible = expanded,
+                                        visible = expandedDay,
                                         enter = expandVertically(),
                                         exit = shrinkVertically()
                                     ) {
-                                        Column {
+                                        Column(modifier = Modifier.padding(start = 16.dp)) {
                                             day.tasks.sortedBy { it.order }.forEach { task ->
                                                 Text("${task.order}. ${task.name}", style = MaterialTheme.typography.labelSmall)
                                                 Text("Opis: ${task.description}", style = MaterialTheme.typography.bodySmall)
@@ -126,16 +161,20 @@ fun TrainingScreen(
                                         }
                                     }
                                 }
+                                // Przycisk "Oznacz jako wykonane" pod ostatnim dniem
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Button(
+                                    onClick = {
+                                        trainingToComplete = Pair(training, "custom_trainings")
+                                        completeRating = 3
+                                        completeNote = ""
+                                        showCompleteDialog = true
+                                    },
+                                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                                ) {
+                                    Text("Oznacz jako wykonane")
+                                }
                             }
-                        }
-                        IconButton(
-                            onClick = {
-                                trainingToDelete = Pair(training.id, "custom_trainings")
-                                showDeleteDialog = true
-                            },
-                            modifier = Modifier.align(Alignment.TopEnd)
-                        ) {
-                            Icon(Icons.Default.Delete, contentDescription = "Usuń trening")
                         }
                     }
                 }
@@ -149,38 +188,67 @@ fun TrainingScreen(
             Text("Brak generowanych treningów")
         } else {
             generatedTrainings.forEach { training ->
+                val expanded = expandedTrainings[training.id] ?: false
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 8.dp)
                 ) {
-                    Box {
-                        Column(modifier = Modifier.padding(12.dp)) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { expandedTrainings[training.id] = !expanded }
+                                .padding(end = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             val date = formatDate(training.creationDate)
                             Text(
-                                "${training.name}" + if(date.isNotBlank()) ", $date" else "",
-                                style = MaterialTheme.typography.titleMedium
+                                text = "${training.name}" + if(date.isNotBlank()) ", $date" else "",
+                                style = MaterialTheme.typography.titleMedium,
+                                modifier = Modifier.weight(1f)
                             )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            training.days.forEachIndexed { idx, day ->
-                                val key = "${training.name}_${day.dayName}"
-                                val expanded = expandedDays[key] ?: false
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable { expandedDays[key] = !expanded }
-                                        .padding(vertical = 4.dp)
-                                ) {
-                                    Text(
-                                        text = "Dzień ${idx + 1}",
-                                        style = MaterialTheme.typography.labelLarge
-                                    )
+                            IconButton(
+                                onClick = {
+                                    trainingToDelete = Pair(training.id, "generated_trainings")
+                                    showDeleteDialog = true
+                                }
+                            ) {
+                                Icon(Icons.Default.Delete, contentDescription = "Usuń trening")
+                            }
+                        }
+                        AnimatedVisibility(
+                            visible = expanded,
+                            enter = expandVertically(),
+                            exit = shrinkVertically()
+                        ) {
+                            Column {
+                                training.days.forEachIndexed { idx, day ->
+                                    val dayKey = "${training.id}_$idx"
+                                    val expandedDay = expandedDays[dayKey] ?: false
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable { expandedDays[dayKey] = !expandedDay }
+                                            .padding(vertical = 4.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = "Dzień ${idx + 1}",
+                                            style = MaterialTheme.typography.labelLarge,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        Text(
+                                            text = if (expandedDay) "▲" else "▼",
+                                            style = MaterialTheme.typography.labelLarge
+                                        )
+                                    }
                                     AnimatedVisibility(
-                                        visible = expanded,
+                                        visible = expandedDay,
                                         enter = expandVertically(),
                                         exit = shrinkVertically()
                                     ) {
-                                        Column {
+                                        Column(modifier = Modifier.padding(start = 16.dp)) {
                                             day.tasks.sortedBy { it.order }.forEach { task ->
                                                 Text("${task.order}. ${task.name}", style = MaterialTheme.typography.labelSmall)
                                                 Text("Opis: ${task.description}", style = MaterialTheme.typography.bodySmall)
@@ -189,16 +257,19 @@ fun TrainingScreen(
                                         }
                                     }
                                 }
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Button(
+                                    onClick = {
+                                        trainingToComplete = Pair(training, "generated_trainings")
+                                        completeRating = 3
+                                        completeNote = ""
+                                        showCompleteDialog = true
+                                    },
+                                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                                ) {
+                                    Text("Oznacz jako wykonane")
+                                }
                             }
-                        }
-                        IconButton(
-                            onClick = {
-                                trainingToDelete = Pair(training.id, "generated_trainings")
-                                showDeleteDialog = true
-                            },
-                            modifier = Modifier.align(Alignment.TopEnd)
-                        ) {
-                            Icon(Icons.Default.Delete, contentDescription = "Usuń trening")
                         }
                     }
                 }
@@ -210,6 +281,7 @@ fun TrainingScreen(
         }
     }
 
+    // --- Dialog do usunięcia treningu ---
     if (showDeleteDialog && trainingToDelete != null) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
@@ -233,6 +305,66 @@ fun TrainingScreen(
             },
             title = { Text("Usuń trening") },
             text = { Text("Czy na pewno chcesz usunąć ten trening?") }
+        )
+    }
+
+    // --- Dialog "Oznacz jako wykonane"/ocena/notatka/zapisz ---
+    if (showCompleteDialog && trainingToComplete != null) {
+        AlertDialog(
+            onDismissRequest = { if (!isCompleting) showCompleteDialog = false },
+            title = { Text("Ocena treningu") },
+            text = {
+                Column {
+                    Text("Jak oceniasz ten trening?")
+                    Row(
+                        modifier = Modifier.padding(top = 8.dp, bottom = 12.dp)
+                    ) {
+                        (1..5).forEach { value ->
+                            Button(
+                                onClick = { completeRating = value },
+                                colors = if (completeRating == value) ButtonDefaults.buttonColors() else ButtonDefaults.outlinedButtonColors(),
+                                modifier = Modifier.padding(end = 4.dp)
+                            ) {
+                                Text("$value")
+                            }
+                        }
+                    }
+                    OutlinedTextField(
+                        value = completeNote,
+                        onValueChange = { completeNote = it },
+                        label = { Text("Notatka (opcjonalnie)") },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !isCompleting
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        isCompleting = true
+                        val (training, collection) = trainingToComplete!!
+                        trainingViewModel.completeTraining(
+                            training, completeRating, completeNote,
+                            onSuccess = {
+                                isCompleting = false
+                                showCompleteDialog = false
+                            },
+                            onError = {
+                                errorMsg = "Błąd przy zapisie oceny/notatki"
+                                isCompleting = false
+                                showCompleteDialog = false
+                            }
+                        )
+                    },
+                    enabled = !isCompleting
+                ) { Text("Zapisz") }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { if (!isCompleting) showCompleteDialog = false },
+                    enabled = !isCompleting
+                ) { Text("Anuluj") }
+            }
         )
     }
 }

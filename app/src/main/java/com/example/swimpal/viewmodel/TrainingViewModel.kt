@@ -21,9 +21,13 @@ class TrainingViewModel : ViewModel() {
     private val _generatedTrainings = MutableStateFlow<List<Training>>(emptyList())
     val generatedTrainings: StateFlow<List<Training>> = _generatedTrainings
 
+    private val _historyTrainings = MutableStateFlow<List<Training>>(emptyList())
+    val historyTrainings: StateFlow<List<Training>> = _historyTrainings
+
     init {
         fetchCustomTrainings()
         fetchGeneratedTrainings()
+        fetchHistoryTrainings()
     }
 
     private fun toMap(training: Training): Map<String, Any> = mapOf(
@@ -42,6 +46,56 @@ class TrainingViewModel : ViewModel() {
         },
         "creationDate" to training.creationDate
     )
+
+    private fun toHistoryMap(training: Training): Map<String, Any> = mapOf(
+        "name" to training.name,
+        "days" to training.days.map { day ->
+            mapOf(
+                "dayName" to day.dayName,
+                "tasks" to day.tasks.map { task ->
+                    mapOf(
+                        "name" to task.name,
+                        "description" to task.description,
+                        "order" to task.order
+                    )
+                }
+            )
+        },
+        "creationDate" to training.creationDate,
+        "completedDate" to (training.completedDate ?: ""),
+        "rating" to (training.rating ?: 0),
+        "note" to (training.note ?: "")
+    )
+
+    fun generateAndSaveTraining(
+        type: String,
+        difficulty: Int,
+        days: Int,
+        onSuccess: () -> Unit,
+        onError: (Exception) -> Unit
+    ) {
+        val collectionName = when (type) {
+            "Sprinty" -> "sprints_level_$difficulty"
+            "Triathlon" -> "triathlon_level_$difficulty"
+            "Open Water" -> "open_water_level_$difficulty"
+            "Technika" -> "technique_level_$difficulty"
+            else -> "sprints_level_1"
+        }
+
+        fetchTemplateTraining(
+            collectionName = collectionName,
+            days = days,
+            onSuccess = { trainingDays ->
+                saveGeneratedTraining(
+                    trainingName = "$type – poziom $difficulty ($days dni)",
+                    days = trainingDays,
+                    onSuccess = onSuccess,
+                    onError = onError
+                )
+            },
+            onError = onError
+        )
+    }
 
     private fun incrementCustomCountAndDays(onComplete: () -> Unit) {
         val u = user ?: return
@@ -172,7 +226,7 @@ class TrainingViewModel : ViewModel() {
                             id = doc.id,
                             name = map["name"] as? String ?: "",
                             days = days,
-                            creationDate = map["creationDate"] as? String ?: "" // POBIERANIE DATY
+                            creationDate = map["creationDate"] as? String ?: ""
                         )
                     }
                     _customTrainings.value = trainings
@@ -213,7 +267,7 @@ class TrainingViewModel : ViewModel() {
                             id = doc.id,
                             name = map["name"] as? String ?: "",
                             days = days,
-                            creationDate = map["creationDate"] as? String ?: "" // POBIERANIE DATY
+                            creationDate = map["creationDate"] as? String ?: ""
                         )
                     }
                     _generatedTrainings.value = trainings
@@ -252,6 +306,50 @@ class TrainingViewModel : ViewModel() {
             .addOnFailureListener { e -> onError(e) }
     }
 
+    fun fetchHistoryTrainings() {
+        user?.let { u ->
+            db.collection("users")
+                .document(u.uid)
+                .collection("history_trainings")
+                .addSnapshotListener { snapshot, error ->
+                    if (error != null || snapshot == null) {
+                        _historyTrainings.value = emptyList()
+                        return@addSnapshotListener
+                    }
+                    val trainings = snapshot.documents.mapNotNull { doc ->
+                        val map = doc.data ?: return@mapNotNull null
+                        val days = (map["days"] as? List<*>)?.mapNotNull { dayMap ->
+                            dayMap as? Map<*, *>
+                        }?.map { dayObj ->
+                            val tasksList = (dayObj["tasks"] as? List<*>)?.mapNotNull { taskMap ->
+                                taskMap as? Map<*, *>
+                            }?.map { taskObj ->
+                                TrainingTask(
+                                    name = taskObj["name"] as? String ?: "",
+                                    description = taskObj["description"] as? String ?: "",
+                                    order = (taskObj["order"] as? Long)?.toInt() ?: 0
+                                )
+                            } ?: emptyList()
+                            TrainingDay(
+                                dayName = dayObj["dayName"] as? String ?: "",
+                                tasks = tasksList
+                            )
+                        } ?: emptyList()
+                        Training(
+                            id = doc.id,
+                            name = map["name"] as? String ?: "",
+                            days = days,
+                            creationDate = map["creationDate"] as? String ?: "",
+                            completedDate = map["completedDate"] as? String ?: "",
+                            rating = (map["rating"] as? Long)?.toInt() ?: 0,
+                            note = map["note"] as? String ?: ""
+                        )
+                    }
+                    _historyTrainings.value = trainings
+                }
+        }
+    }
+
     fun deleteTraining(trainingId: String, collection: String, onSuccess: () -> Unit, onError: (Exception) -> Unit) {
         val u = user ?: return
         db.collection("users")
@@ -263,34 +361,28 @@ class TrainingViewModel : ViewModel() {
             .addOnFailureListener { e -> onError(e) }
     }
 
-
-    fun generateAndSaveTraining(
-        type: String,
-        difficulty: Int,
-        days: Int,
+    fun completeTraining(
+        training: Training,
+        rating: Int,
+        note: String,
         onSuccess: () -> Unit,
         onError: (Exception) -> Unit
     ) {
-        val collectionName = when (type) {
-            "Sprinty" -> "sprints_level_$difficulty"
-            "Triathlon" -> "triathlon_level_$difficulty"
-            "Open Water" -> "open_water_level_$difficulty"
-            "Technika" -> "technique_level_$difficulty"
-            else -> "sprints_level_1"
-        }
-
-        fetchTemplateTraining(
-            collectionName = collectionName,
-            days = days,
-            onSuccess = { trainingDays ->
-                saveGeneratedTraining(
-                    trainingName = "$type – poziom $difficulty ($days dni)",
-                    days = trainingDays,
-                    onSuccess = onSuccess,
-                    onError = onError
-                )
-            },
-            onError = onError
+        val u = user ?: return onError(Exception("Nie zalogowano użytkownika"))
+        val historyData = training.copy(
+            completedDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()),
+            rating = rating,
+            note = note
         )
+        val historyMap = toHistoryMap(historyData)
+        db.collection("users")
+            .document(u.uid)
+            .collection("history_trainings")
+            .add(historyMap)
+            .addOnSuccessListener {
+                val collectionName = if (_customTrainings.value.any { it.id == training.id }) "custom_trainings" else "generated_trainings"
+                deleteTraining(training.id, collectionName, onSuccess, onError)
+            }
+            .addOnFailureListener { e -> onError(e) }
     }
 }
