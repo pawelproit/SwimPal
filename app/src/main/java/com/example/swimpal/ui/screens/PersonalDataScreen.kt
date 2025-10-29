@@ -1,14 +1,17 @@
 package com.example.swimpal.ui.screens
 
+import android.app.DatePickerDialog
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
 import com.example.swimpal.model.UserProfile
 import com.example.swimpal.viewmodel.ProfileState
 import androidx.compose.material3.ExperimentalMaterial3Api
+import java.util.Calendar
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -23,7 +26,15 @@ fun PersonalDataScreen(
     var gender by remember { mutableStateOf("") }
     var genderExpanded by remember { mutableStateOf(false) }
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.Center) {
+    val context = LocalContext.current
+    val calendar = remember { Calendar.getInstance() }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Center
+    ) {
         TextField(
             value = firstName,
             onValueChange = { firstName = it },
@@ -40,13 +51,26 @@ fun PersonalDataScreen(
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(16.dp))
-        TextField(
-            value = birthDate,
-            onValueChange = { birthDate = it },
-            label = { Text("Data urodzenia (YYYY-MM-DD)") },
-            singleLine = true,
+
+        Button(
+            onClick = {
+                val datePickerDialog = DatePickerDialog(
+                    context,
+                    { _, year, month, dayOfMonth ->
+                        val pickedDate = String.format("%04d-%02d-%02d", year, month + 1, dayOfMonth)
+                        birthDate = pickedDate
+                    },
+                    calendar.get(Calendar.YEAR),
+                    calendar.get(Calendar.MONTH),
+                    calendar.get(Calendar.DAY_OF_MONTH)
+                )
+                datePickerDialog.show()
+            },
             modifier = Modifier.fillMaxWidth()
-        )
+        ) {
+            Text(if (birthDate.isBlank()) "Wybierz datę urodzenia" else "Data: $birthDate")
+        }
+
         Spacer(modifier = Modifier.height(16.dp))
         ExposedDropdownMenuBox(
             expanded = genderExpanded,

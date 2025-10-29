@@ -8,6 +8,8 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import java.text.SimpleDateFormat
+import java.util.*
 
 class TrainingViewModel : ViewModel() {
     private val db = FirebaseFirestore.getInstance()
@@ -40,6 +42,58 @@ class TrainingViewModel : ViewModel() {
         }
     )
 
+    // NOWA - aktualizacja licznika customCount, totalCount i trainingDates
+    private fun incrementCustomCountAndDays(onComplete: () -> Unit) {
+        val u = user ?: return
+        val userDoc = db.collection("users").document(u.uid)
+        userDoc.get().addOnSuccessListener { doc ->
+            val profile = doc.data
+            val customCount = ((profile?.get("customCount") as? Long) ?: 0L) + 1
+            val generatedCount = (profile?.get("generatedCount") as? Long ?: 0L)
+            val totalCount = customCount + generatedCount
+
+            val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+            val trainingDates = ((profile?.get("trainingDates") as? List<*>)?.mapNotNull { it as? String } ?: emptyList()).toMutableSet()
+            trainingDates.add(today)
+            val activeDays = trainingDates.size
+
+            userDoc.update(
+                mapOf(
+                    "customCount" to customCount,
+                    "totalCount" to totalCount,
+                    "activeDays" to activeDays,
+                    "trainingDates" to trainingDates.toList()
+                )
+            ).addOnSuccessListener { onComplete() }
+        }
+    }
+
+    // NOWA - analogiczna dla generatedCount
+    private fun incrementGeneratedCountAndDays(onComplete: () -> Unit) {
+        val u = user ?: return
+        val userDoc = db.collection("users").document(u.uid)
+        userDoc.get().addOnSuccessListener { doc ->
+            val profile = doc.data
+            val generatedCount = ((profile?.get("generatedCount") as? Long) ?: 0L) + 1
+            val customCount = (profile?.get("customCount") as? Long ?: 0L)
+            val totalCount = customCount + generatedCount
+
+            val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+            val trainingDates = ((profile?.get("trainingDates") as? List<*>)?.mapNotNull { it as? String } ?: emptyList()).toMutableSet()
+            trainingDates.add(today)
+            val activeDays = trainingDates.size
+
+            userDoc.update(
+                mapOf(
+                    "generatedCount" to generatedCount,
+                    "totalCount" to totalCount,
+                    "activeDays" to activeDays,
+                    "trainingDates" to trainingDates.toList()
+                )
+            ).addOnSuccessListener { onComplete() }
+        }
+    }
+
     fun saveCustomTraining(
         trainingName: String,
         days: List<TrainingDay>,
@@ -56,7 +110,9 @@ class TrainingViewModel : ViewModel() {
             .document(u.uid)
             .collection("custom_trainings")
             .add(toMap(training))
-            .addOnSuccessListener { onSuccess() }
+            .addOnSuccessListener {
+                incrementCustomCountAndDays(onSuccess)
+            }
             .addOnFailureListener { e -> onError(e) }
     }
 
@@ -76,7 +132,9 @@ class TrainingViewModel : ViewModel() {
             .document(u.uid)
             .collection("generated_trainings")
             .add(toMap(training))
-            .addOnSuccessListener { onSuccess() }
+            .addOnSuccessListener {
+                incrementGeneratedCountAndDays(onSuccess)
+            }
             .addOnFailureListener { e -> onError(e) }
     }
 

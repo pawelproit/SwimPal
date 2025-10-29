@@ -21,8 +21,9 @@ fun TrainingScreen(
     val customTrainings by trainingViewModel.customTrainings.collectAsState()
     val generatedTrainings by trainingViewModel.generatedTrainings.collectAsState()
     var errorMsg by remember { mutableStateOf("") }
-
     val expandedDays = remember { mutableStateMapOf<String, Boolean>() }
+    var opisExpanded by remember { mutableStateOf(false) }
+    val globalOpis = "Opis zadań: Tutaj znajdziesz wyjaśnienia techniczne, wskazówki i dodatkowe informacje dotyczące wszystkich ćwiczeń, które pojawiają się w treningach. Skup się na technice, oddychaniu, tempie pływania i regeneracji między kolejnymi zadaniami."
 
     Column(
         modifier = Modifier
@@ -32,6 +33,34 @@ fun TrainingScreen(
     ) {
         Text("Ekran Treningów", style = MaterialTheme.typography.titleLarge)
         Spacer(modifier = Modifier.height(16.dp))
+
+        // --- Dodany pasek Opis zadań ---
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp)
+                .clickable { opisExpanded = !opisExpanded }
+        ) {
+            Column(modifier = Modifier.padding(12.dp)) {
+                Text(
+                    text = "Opis zadań",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                AnimatedVisibility(
+                    visible = opisExpanded,
+                    enter = expandVertically(),
+                    exit = shrinkVertically()
+                ) {
+                    Text(
+                        text = globalOpis,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+                }
+            }
+        }
+        // --- Koniec paska Opis zadań ---
+
 
         Text("Treningi własne", style = MaterialTheme.typography.titleMedium)
         if (customTrainings.isEmpty()) {
