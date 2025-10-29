@@ -10,9 +10,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.swimpal.viewmodel.TrainingViewModel
+import com.example.swimpal.viewmodel.UserProfileViewModel
+import com.example.swimpal.viewmodel.ProfileState
+import kotlinx.coroutines.flow.collectLatest
 
 @Composable
-fun GeneratedTrainingScreen(trainingViewModel: TrainingViewModel = viewModel()) {
+fun GeneratedTrainingScreen(
+    trainingViewModel: TrainingViewModel = viewModel(),
+    userProfileViewModel: UserProfileViewModel = viewModel()
+) {
     var selectedType by remember { mutableStateOf("Sprinty") }
     var selectedDifficulty by remember { mutableStateOf(1) }
     var selectedDays by remember { mutableStateOf(3) }
@@ -20,6 +26,28 @@ fun GeneratedTrainingScreen(trainingViewModel: TrainingViewModel = viewModel()) 
     var infoMsg by remember { mutableStateOf("") }
 
     val trainingTypes = listOf("Sprinty", "Triathlon", "Open Water", "Technika")
+
+    var showBadgeDialog by remember { mutableStateOf(false) }
+    var newBadge by remember { mutableStateOf<Pair<String, String>?>(null) }
+    val profileState by userProfileViewModel.profileState.collectAsState()
+
+    var prevBadges by remember { mutableStateOf<List<String>>(emptyList()) }
+
+    LaunchedEffect(profileState) {
+        if (profileState is ProfileState.Success) {
+            val profile = (profileState as ProfileState.Success).userProfile
+            val currentBadges = profile.badges.filter { it.achieved }.map { it.name }
+            val newUnlocked = currentBadges.minus(prevBadges.toSet())
+            if (newUnlocked.isNotEmpty()) {
+                val badgeObj = profile.badges.first { it.name == newUnlocked.first() }
+                newBadge = badgeObj.name to badgeObj.description
+                showBadgeDialog = true
+            } else {
+                newBadge = null
+            }
+            prevBadges = currentBadges
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -102,7 +130,10 @@ fun GeneratedTrainingScreen(trainingViewModel: TrainingViewModel = viewModel()) 
                     type = selectedType,
                     difficulty = selectedDifficulty,
                     days = selectedDays,
-                    onSuccess = { infoMsg = "Wygenerowano i zapisano trening!" },
+                    onSuccess = {
+                        infoMsg = "Wygenerowano i zapisano trening!"
+                        userProfileViewModel.loadUserProfile()
+                    },
                     onError = { errorMsg = it.message ?: "Błąd zapisu treningu" }
                 )
             },
@@ -113,5 +144,18 @@ fun GeneratedTrainingScreen(trainingViewModel: TrainingViewModel = viewModel()) 
             Text("Generuj trening")
         }
         Spacer(modifier = Modifier.height(36.dp))
+    }
+
+    if (showBadgeDialog && newBadge != null) {
+        AlertDialog(
+            onDismissRequest = { showBadgeDialog = false },
+            confirmButton = {
+                Button(onClick = { showBadgeDialog = false }) {
+                    Text("OK")
+                }
+            },
+            title = { Text("Gratulacje!") },
+            text = { Text("Zdobywasz nową odznakę: ${newBadge!!.first}\n${newBadge!!.second}") }
+        )
     }
 }

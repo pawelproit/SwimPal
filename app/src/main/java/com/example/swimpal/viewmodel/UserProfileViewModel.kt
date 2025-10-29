@@ -39,7 +39,6 @@ class UserProfileViewModel : ViewModel() {
         Badge("Days 20", "20 aktywnych dni", days >= 20)
     )
 
-    // Zawsze zapisujemy najnowszy stan badgy!
     fun saveUserProfile(userProfile: UserProfile) {
         val uid = currentUid ?: return
         val freshBadges = defaultBadges(
@@ -78,10 +77,9 @@ class UserProfileViewModel : ViewModel() {
                         profile.totalCount,
                         profile.activeDays
                     )
-                    // Zawsze nadpisujemy badge zaktualizowanymi achieved!
+
                     val profileWithBadges = profile.copy(badges = freshBadges)
                     _profileState.value = ProfileState.Success(profileWithBadges)
-                    // Aktualizuj w Firebase jeśli są rozbieżności
                     if (profile.badges != freshBadges) {
                         firestore.collection("users").document(uid).update("badges", freshBadges)
                     }

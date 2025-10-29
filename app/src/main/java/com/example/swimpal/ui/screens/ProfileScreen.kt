@@ -51,6 +51,7 @@ fun ProfileScreen(
     var expandedHistory by remember { mutableStateOf(false) }
 
     val historyTrainings by trainingViewModel.historyTrainings.collectAsState(initial = emptyList())
+    val expandedHistoryTrainings = remember { mutableStateMapOf<String, Boolean>() }
 
     LaunchedEffect(Unit) {
         userProfileViewModel.loadUserProfile()
@@ -178,11 +179,22 @@ fun ProfileScreen(
                             Text("Brak historii treningów")
                         } else {
                             historyTrainings.forEach { training ->
+                                val expanded = expandedHistoryTrainings[training.id] ?: false
                                 Column(modifier = Modifier.padding(vertical = 8.dp)) {
-                                    Text(
-                                        text = training.name,
-                                        style = MaterialTheme.typography.titleMedium
-                                    )
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable { expandedHistoryTrainings[training.id] = !expanded }
+                                            .padding(vertical = 4.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = training.name,
+                                            style = MaterialTheme.typography.titleMedium,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        Text(if (expanded) "▲" else "▼")
+                                    }
                                     Text(
                                         text = "Ukończono: ${training.completedDate}",
                                         style = MaterialTheme.typography.bodySmall
@@ -196,6 +208,29 @@ fun ProfileScreen(
                                             text = "Notatka: ${training.note}",
                                             style = MaterialTheme.typography.bodySmall
                                         )
+                                    }
+                                    AnimatedVisibility(visible = expanded) {
+                                        Column {
+                                            training.days.forEachIndexed { dayIdx, day ->
+                                                Text(
+                                                    text = "Dzień ${dayIdx + 1}",
+                                                    style = MaterialTheme.typography.labelLarge,
+                                                    modifier = Modifier.padding(top = 8.dp, bottom = 2.dp)
+                                                )
+                                                day.tasks.sortedBy { it.order }.forEach { task ->
+                                                    Text(
+                                                        text = "${task.order}. ${task.name}",
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        modifier = Modifier.padding(start = 16.dp)
+                                                    )
+                                                    Text(
+                                                        text = "Opis: ${task.description}",
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        modifier = Modifier.padding(start = 16.dp, bottom = 4.dp)
+                                                    )
+                                                }
+                                            }
+                                        }
                                     }
                                     Divider(modifier = Modifier.padding(vertical = 8.dp))
                                 }
@@ -215,6 +250,7 @@ fun ProfileScreen(
         }
     }
 }
+
 
 @Composable
 private fun ExpandableCard(
