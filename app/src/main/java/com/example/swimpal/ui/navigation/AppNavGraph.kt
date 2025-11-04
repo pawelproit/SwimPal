@@ -1,13 +1,16 @@
 package com.example.swimpal.ui.navigation
 
+import android.content.Context
 import androidx.compose.runtime.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.compose.ui.platform.LocalContext
 import com.example.swimpal.ui.screens.LoginScreen
 import com.example.swimpal.ui.screens.RegisterScreen
 import com.example.swimpal.ui.screens.PersonalDataScreen
+import com.example.swimpal.ui.screens.WelcomeScreen
 import com.example.swimpal.viewmodel.AuthState
 import com.example.swimpal.viewmodel.AuthViewModel
 import com.example.swimpal.viewmodel.UserProfileViewModel
@@ -18,15 +21,43 @@ fun AppNavGraph(
     authViewModel: AuthViewModel,
     userProfileViewModel: UserProfileViewModel = viewModel()
 ) {
+    val context = LocalContext.current
     val authState by authViewModel.authState.collectAsState()
     val profileState by userProfileViewModel.profileState.collectAsState()
 
-    val startDestination = if (authViewModel.isUserLoggedIn()) "main" else "login"
+
+    val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
+    val hasSeenWelcome = prefs.getBoolean("has_seen_welcome", false)
+
+
+    val startDestination = when {
+        !hasSeenWelcome -> "welcome"
+        authViewModel.isUserLoggedIn() -> "main"
+        else -> "login"
+    }
 
     NavHost(
         navController = navController,
         startDestination = startDestination
     ) {
+        composable("welcome") {
+            WelcomeScreen(
+                onContinue = {
+                    prefs.edit().putBoolean("has_seen_welcome", true).apply()
+
+                    if (authViewModel.isUserLoggedIn()) {
+                        navController.navigate("main") {
+                            popUpTo("welcome") { inclusive = true }
+                        }
+                    } else {
+                        navController.navigate("login") {
+                            popUpTo("welcome") { inclusive = true }
+                        }
+                    }
+                }
+            )
+        }
+
         composable("login") {
             LoginScreen(
                 authState = authState,
@@ -41,6 +72,7 @@ fun AppNavGraph(
                 }
             }
         }
+
         composable("register") {
             RegisterScreen(
                 authState = authState,
@@ -59,6 +91,7 @@ fun AppNavGraph(
                 }
             }
         }
+
         composable("personalData") {
             PersonalDataScreen(
                 profileState = profileState,
@@ -72,6 +105,7 @@ fun AppNavGraph(
                 }
             )
         }
+
         composable("main") {
             MainScreenWithBottomNav(
                 onLogout = {
@@ -82,6 +116,5 @@ fun AppNavGraph(
                 }
             )
         }
-
     }
 }

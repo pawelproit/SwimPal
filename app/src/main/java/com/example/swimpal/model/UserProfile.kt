@@ -17,6 +17,7 @@ data class UserProfile(
     val generatedCount: Int = 0,
     val totalCount: Int = 0,
     val activeDays: Int = 0,
+    val currentStreak: Int = 0,
     val trainingDates: List<String> = emptyList(),
     val badges: List<Badge> = emptyList()
 )

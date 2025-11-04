@@ -7,13 +7,11 @@ import androidx.navigation.compose.*
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.unit.dp
-import com.example.swimpal.ui.navigation.BottomNavItem
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.example.swimpal.ui.screens.ProfileScreen
 import com.example.swimpal.ui.screens.TrainingScreen
 import com.example.swimpal.ui.screens.MainScreen
 import com.example.swimpal.ui.screens.GenerateScreen
-
-
 
 @Composable
 fun MainScreenWithBottomNav(
@@ -22,14 +20,17 @@ fun MainScreenWithBottomNav(
     val navController = rememberNavController()
     val items = listOf(
         BottomNavItem.Main,
-        BottomNavItem.Training,
         BottomNavItem.Generate,
+        BottomNavItem.Training,
         BottomNavItem.Profile
     )
+
     Scaffold(
         bottomBar = {
             NavigationBar {
-                val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
+                val navBackStackEntry by navController.currentBackStackEntryAsState()
+                val currentRoute = navBackStackEntry?.destination?.route
+
                 items.forEach { item ->
                     NavigationBarItem(
                         icon = { Icon(item.icon, contentDescription = null) },
@@ -38,11 +39,11 @@ fun MainScreenWithBottomNav(
                         onClick = {
                             if (currentRoute != item.route) {
                                 navController.navigate(item.route) {
-                                    launchSingleTop = true
-                                    restoreState = true
-                                    popUpTo(navController.graph.startDestinationId) {
+                                    popUpTo(navController.graph.findStartDestination().id) {
                                         saveState = true
                                     }
+                                    launchSingleTop = true
+                                    restoreState = true
                                 }
                             }
                         }
@@ -53,19 +54,44 @@ fun MainScreenWithBottomNav(
     ) { paddingValues ->
         NavHost(
             navController = navController,
-            startDestination = BottomNavItem.Main.route,
+            startDestination = "main",
             modifier = Modifier.padding(paddingValues)
         ) {
-            composable(BottomNavItem.Main.route) {
-                MainScreen()
+            composable("main") {
+                MainScreen(
+                    onNavigateToGenerate = {
+                        navController.navigate("generate") {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            restoreState = true
+                        }
+                    },
+                    onNavigateToTraining = {
+                        navController.navigate("training") {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            restoreState = true
+                        }
+                    },
+                    onNavigateToHistory = {
+                        navController.navigate("profile") {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            restoreState = true
+                        }
+                    }
+                )
             }
-            composable(BottomNavItem.Training.route) {
+            composable("training") {
                 TrainingScreen()
             }
-            composable(BottomNavItem.Generate.route) {
+            composable("generate") {
                 GenerateScreen()
             }
-            composable(BottomNavItem.Profile.route) {
+            composable("profile") {
                 ProfileScreen(onLogout = onLogout)
             }
         }

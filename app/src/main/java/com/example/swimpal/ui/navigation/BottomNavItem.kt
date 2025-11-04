@@ -12,7 +12,7 @@ sealed class BottomNavItem(
     val icon: ImageVector
 ) {
     object Main : BottomNavItem("main", R.string.main, Icons.Default.Home)
-    object Training : BottomNavItem("training", R.string.training, Icons.Default.List)
     object Generate : BottomNavItem("generate", R.string.generate, Icons.Default.AddCircle)
+    object Training : BottomNavItem("training", R.string.training, Icons.Default.List)
     object Profile : BottomNavItem("profile", R.string.profile, Icons.Default.Person)
 }
