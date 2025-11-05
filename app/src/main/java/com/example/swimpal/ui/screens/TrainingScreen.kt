@@ -207,8 +207,9 @@ fun TrainingScreen(
                                         }
                                     }
                                 }
-                                // Przycisk "Oznacz jako wykonane" pod ostatnim dniem
                                 Spacer(modifier = Modifier.height(12.dp))
+
+
                                 Button(
                                     onClick = {
                                         trainingToComplete = Pair(training, "custom_trainings")
@@ -228,6 +229,7 @@ fun TrainingScreen(
         }
 
         Spacer(modifier = Modifier.height(24.dp))
+//1/2
 
         Text("Treningi generowane", style = MaterialTheme.typography.titleMedium)
         if (generatedTrainings.isEmpty()) {
@@ -327,18 +329,30 @@ fun TrainingScreen(
         }
     }
 
-    // --- Dialog do usunięcia treningu ---
+
     if (showDeleteDialog && trainingToDelete != null) {
+        val currentTrainingId = trainingToDelete!!.first
+        val currentCollection = trainingToDelete!!.second
+
         AlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
+            onDismissRequest = {
+                showDeleteDialog = false
+                trainingToDelete = null
+            },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        trainingViewModel.deleteTraining(trainingToDelete!!.first, trainingToDelete!!.second,
-                            onSuccess = { showDeleteDialog = false },
-                            onError = {
-                                errorMsg = "Błąd podczas usuwania treningu"
-                                showDeleteDialog = false
+                        showDeleteDialog = false
+                        trainingToDelete = null
+
+
+                        trainingViewModel.deleteTraining(
+                            currentTrainingId,
+                            currentCollection,
+                            onSuccess = {
+                            },
+                            onError = { e ->
+                                errorMsg = "Błąd podczas usuwania treningu: ${e.message}"
                             }
                         )
                     }
@@ -346,7 +360,10 @@ fun TrainingScreen(
             },
             dismissButton = {
                 TextButton(
-                    onClick = { showDeleteDialog = false }
+                    onClick = {
+                        showDeleteDialog = false
+                        trainingToDelete = null
+                    }
                 ) { Text("Nie") }
             },
             title = { Text("Usuń trening") },
@@ -354,10 +371,21 @@ fun TrainingScreen(
         )
     }
 
-    // --- Dialog "Oznacz jako wykonane"/ocena/notatka/zapisz ---
+
     if (showCompleteDialog && trainingToComplete != null) {
+        // Capture wartości PRZED dialogiem
+        val currentTraining = trainingToComplete!!.first
+        val currentCollection = trainingToComplete!!.second
+        val currentRating = completeRating
+        val currentNote = completeNote
+
         AlertDialog(
-            onDismissRequest = { if (!isCompleting) showCompleteDialog = false },
+            onDismissRequest = {
+                if (!isCompleting) {
+                    showCompleteDialog = false
+                    trainingToComplete = null
+                }
+            },
             title = { Text("Ocena treningu") },
             text = {
                 Column {
@@ -368,7 +396,11 @@ fun TrainingScreen(
                         (1..5).forEach { value ->
                             Button(
                                 onClick = { completeRating = value },
-                                colors = if (completeRating == value) ButtonDefaults.buttonColors() else ButtonDefaults.outlinedButtonColors(),
+                                colors = if (completeRating == value) {
+                                    ButtonDefaults.buttonColors()
+                                } else {
+                                    ButtonDefaults.outlinedButtonColors()
+                                },
                                 modifier = Modifier.padding(end = 4.dp)
                             ) {
                                 Text("$value")
@@ -388,29 +420,48 @@ fun TrainingScreen(
                 TextButton(
                     onClick = {
                         isCompleting = true
-                        val (training, collection) = trainingToComplete!!
+
                         trainingViewModel.completeTraining(
-                            training, completeRating, completeNote,
+                            training = currentTraining,
+                            collectionName = currentCollection,
+                            rating = completeRating,
+                            note = completeNote,
                             onSuccess = {
                                 isCompleting = false
                                 showCompleteDialog = false
+                                trainingToComplete = null
+                                completeRating = 3
+                                completeNote = ""
                             },
-                            onError = {
-                                errorMsg = "Błąd przy zapisie oceny/notatki"
+                            onError = { e ->
+                                errorMsg = "Błąd przy zapisie oceny/notatki: ${e.message}"
                                 isCompleting = false
                                 showCompleteDialog = false
+                                trainingToComplete = null
                             }
                         )
                     },
                     enabled = !isCompleting
-                ) { Text("Zapisz") }
+                ) {
+                    if (isCompleting) {
+                        Text("Zapisywanie...")
+                    } else {
+                        Text("Zapisz")
+                    }
+                }
             },
             dismissButton = {
                 TextButton(
-                    onClick = { if (!isCompleting) showCompleteDialog = false },
+                    onClick = {
+                        if (!isCompleting) {
+                            showCompleteDialog = false
+                            trainingToComplete = null
+                        }
+                    },
                     enabled = !isCompleting
                 ) { Text("Anuluj") }
             }
         )
     }
+
 }

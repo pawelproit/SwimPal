@@ -6,7 +6,6 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.*
 import androidx.compose.ui.res.stringResource
 import androidx.compose.foundation.layout.padding
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.example.swimpal.ui.screens.ProfileScreen
 import com.example.swimpal.ui.screens.TrainingScreen

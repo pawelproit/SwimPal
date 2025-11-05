@@ -25,16 +25,7 @@ fun AppNavGraph(
     val authState by authViewModel.authState.collectAsState()
     val profileState by userProfileViewModel.profileState.collectAsState()
 
-
-    val prefs = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-    val hasSeenWelcome = prefs.getBoolean("has_seen_welcome", false)
-
-
-    val startDestination = when {
-        !hasSeenWelcome -> "welcome"
-        authViewModel.isUserLoggedIn() -> "main"
-        else -> "login"
-    }
+    val startDestination = "welcome"
 
     NavHost(
         navController = navController,
@@ -43,8 +34,6 @@ fun AppNavGraph(
         composable("welcome") {
             WelcomeScreen(
                 onContinue = {
-                    prefs.edit().putBoolean("has_seen_welcome", true).apply()
-
                     if (authViewModel.isUserLoggedIn()) {
                         navController.navigate("main") {
                             popUpTo("welcome") { inclusive = true }
@@ -116,5 +105,6 @@ fun AppNavGraph(
                 }
             )
         }
+
     }
 }

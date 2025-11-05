@@ -363,26 +363,47 @@ class TrainingViewModel : ViewModel() {
 
     fun completeTraining(
         training: Training,
+        collectionName: String,
         rating: Int,
         note: String,
         onSuccess: () -> Unit,
         onError: (Exception) -> Unit
     ) {
-        val u = user ?: return onError(Exception("Nie zalogowano użytkownika"))
+        val u = user
+        if (u == null) {
+            onError(Exception("Nie zalogowano użytkownika"))
+            return
+        }
+
+        val completedDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
         val historyData = training.copy(
-            completedDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date()),
+            completedDate = completedDate,
             rating = rating,
             note = note
         )
         val historyMap = toHistoryMap(historyData)
+
         db.collection("users")
             .document(u.uid)
             .collection("history_trainings")
             .add(historyMap)
             .addOnSuccessListener {
-                val collectionName = if (_customTrainings.value.any { it.id == training.id }) "custom_trainings" else "generated_trainings"
-                deleteTraining(training.id, collectionName, onSuccess, onError)
+                db.collection("users")
+                    .document(u.uid)
+                    .collection(collectionName)
+                    .document(training.id)
+                    .delete()
+                    .addOnSuccessListener {
+                        fetchHistoryTrainings()
+                        onSuccess()
+                    }
+                    .addOnFailureListener { e ->
+                        onError(e)
+                    }
             }
-            .addOnFailureListener { e -> onError(e) }
+            .addOnFailureListener { e ->
+                onError(e)
+            }
     }
+
 }
