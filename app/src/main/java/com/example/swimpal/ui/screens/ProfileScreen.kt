@@ -209,7 +209,6 @@ private fun TrainingHistorySection(
                     Text(if (expanded) "▲" else "▼")
                 }
 
-                // ✅ Data rozpoczęcia (utworzenia)
                 if (training.creationDate.isNotBlank()) {
                     Text(
                         text = "Utworzono: ${formatDate(training.creationDate)}",
@@ -217,7 +216,6 @@ private fun TrainingHistorySection(
                     )
                 }
 
-                // ✅ Data ukończenia
                 if (!training.completedDate.isNullOrBlank()) {
                     Text(
                         text = "Ukończono: ${formatDate(training.completedDate)}",

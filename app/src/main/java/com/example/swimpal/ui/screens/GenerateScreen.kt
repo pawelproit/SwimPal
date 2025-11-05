@@ -17,7 +17,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.swimpal.ui.screens.generateScreen.GeneratedTrainingScreen
-import com.example.swimpal.ui.screens.generateScreen.ContactScreen
 import com.example.swimpal.ui.screens.generateScreen.CustomTrainingScreen
 
 @Composable
@@ -27,7 +26,6 @@ fun GenerateScreen() {
     val tabs = listOf(
         "generate/generated" to "Generuj Trening",
         "generate/custom" to "Napisz Trening",
-        "generate/contact" to "Kontakt"
     )
 
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
@@ -59,7 +57,6 @@ fun GenerateScreen() {
         ) {
             composable("generate/generated") { GeneratedTrainingScreen() }
             composable("generate/custom") { CustomTrainingScreen() }
-            composable("generate/contact") { ContactScreen() }
         }
     }
 }
