@@ -373,7 +373,6 @@ fun TrainingScreen(
 
 
     if (showCompleteDialog && trainingToComplete != null) {
-        // Capture wartości PRZED dialogiem
         val currentTraining = trainingToComplete!!.first
         val currentCollection = trainingToComplete!!.second
         val currentRating = completeRating

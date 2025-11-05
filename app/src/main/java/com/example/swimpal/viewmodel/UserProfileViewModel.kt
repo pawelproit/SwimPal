@@ -93,4 +93,26 @@ class UserProfileViewModel : ViewModel() {
                 _profileState.value = ProfileState.Error(e.localizedMessage ?: "Błąd pobierania profilu")
             }
     }
+
+    fun markBadgeAsSeen(badgeName: String) {
+        val userId = auth.currentUser?.uid ?: return
+        val db = FirebaseFirestore.getInstance()
+
+        val userRef = db.collection("users").document(userId)
+        userRef.get().addOnSuccessListener { doc ->
+            val badges = doc.get("badges") as? List<Map<String, Any>> ?: return@addOnSuccessListener
+            val updatedBadges = badges.map { badgeMap ->
+                if (badgeMap["name"] == badgeName) {
+                    badgeMap.toMutableMap().apply {
+                        put("isNew", false)
+                    }
+                } else {
+                    badgeMap
+                }
+            }
+            userRef.update("badges", updatedBadges)
+        }
+    }
+
 }
+

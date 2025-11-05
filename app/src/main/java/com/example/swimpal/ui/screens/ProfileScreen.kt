@@ -55,7 +55,7 @@ fun ProfileScreen(
 
     LaunchedEffect(Unit) {
         userProfileViewModel.loadUserProfile()
-        trainingViewModel.fetchHistoryTrainings()
+
     }
 
     LaunchedEffect(profileState) {

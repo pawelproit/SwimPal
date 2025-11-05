@@ -36,16 +36,12 @@ fun GeneratedTrainingScreen(
     LaunchedEffect(profileState) {
         if (profileState is ProfileState.Success) {
             val profile = (profileState as ProfileState.Success).userProfile
-            val currentBadges = profile.badges.filter { it.achieved }.map { it.name }
-            val newUnlocked = currentBadges.minus(prevBadges.toSet())
-            if (newUnlocked.isNotEmpty()) {
-                val badgeObj = profile.badges.first { it.name == newUnlocked.first() }
-                newBadge = badgeObj.name to badgeObj.description
+            val newlyAchievedBadge = profile.badges.firstOrNull { it.achieved && it.isNew }
+
+            if (newlyAchievedBadge != null) {
+                newBadge = newlyAchievedBadge.name to newlyAchievedBadge.description
                 showBadgeDialog = true
-            } else {
-                newBadge = null
             }
-            prevBadges = currentBadges
         }
     }
 
@@ -148,9 +144,15 @@ fun GeneratedTrainingScreen(
 
     if (showBadgeDialog && newBadge != null) {
         AlertDialog(
-            onDismissRequest = { showBadgeDialog = false },
+            onDismissRequest = {
+                showBadgeDialog = false
+                userProfileViewModel.markBadgeAsSeen(newBadge!!.first)
+            },
             confirmButton = {
-                Button(onClick = { showBadgeDialog = false }) {
+                Button(onClick = {
+                    showBadgeDialog = false
+                    userProfileViewModel.markBadgeAsSeen(newBadge!!.first)
+                }) {
                     Text("OK")
                 }
             },
@@ -158,4 +160,5 @@ fun GeneratedTrainingScreen(
             text = { Text("Zdobywasz nową odznakę: ${newBadge!!.first}\n${newBadge!!.second}") }
         )
     }
+
 }
