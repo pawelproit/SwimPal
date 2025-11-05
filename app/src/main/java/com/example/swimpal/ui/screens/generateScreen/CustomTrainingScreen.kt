@@ -21,10 +21,15 @@ fun CustomTrainingScreen(
     onTrainingSaved: () -> Unit = {}
 ) {
     var trainingName by remember { mutableStateOf("") }
-    var days by remember { mutableStateOf(listOf(
-        TrainingDayInput("Dzień 1", listOf(TrainingTaskInput("", "")))
-    )) }
+    var days by remember {
+        mutableStateOf(
+            listOf(
+                TrainingDayInput("Dzień 1", listOf(TrainingTaskInput("", "")))
+            )
+        )
+    }
     var errorMsg by remember { mutableStateOf("") }
+    var infoMsg by remember { mutableStateOf("") }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -51,8 +56,8 @@ fun CustomTrainingScreen(
                         OutlinedTextField(
                             value = dayInput.dayName,
                             onValueChange = { name ->
-                                days = days.mapIndexed { i, d ->
-                                    if (i == dayIdx) d.copy(dayName = name) else d
+                                days = days.toMutableList().apply {
+                                    this[dayIdx] = this[dayIdx].copy(dayName = name)
                                 }
                             },
                             label = { Text("Nazwa dnia") },
@@ -64,12 +69,12 @@ fun CustomTrainingScreen(
                             OutlinedTextField(
                                 value = taskInput.name,
                                 onValueChange = { value ->
-                                    days = days.mapIndexed { i, d ->
-                                        if (i == dayIdx)
-                                            d.copy(tasks = d.tasks.mapIndexed { j, t ->
-                                                if (j == taskIdx) t.copy(name = value) else t
-                                            })
-                                        else d
+                                    days = days.toMutableList().apply {
+                                        this[dayIdx] = this[dayIdx].copy(
+                                            tasks = this[dayIdx].tasks.toMutableList().apply {
+                                                this[taskIdx] = this[taskIdx].copy(name = value)
+                                            }
+                                        )
                                     }
                                 },
                                 label = { Text("Nazwa zadania ${taskIdx + 1}") },
@@ -78,12 +83,12 @@ fun CustomTrainingScreen(
                             OutlinedTextField(
                                 value = taskInput.description,
                                 onValueChange = { value ->
-                                    days = days.mapIndexed { i, d ->
-                                        if (i == dayIdx)
-                                            d.copy(tasks = d.tasks.mapIndexed { j, t ->
-                                                if (j == taskIdx) t.copy(description = value) else t
-                                            })
-                                        else d
+                                    days = days.toMutableList().apply {
+                                        this[dayIdx] = this[dayIdx].copy(
+                                            tasks = this[dayIdx].tasks.toMutableList().apply {
+                                                this[taskIdx] = this[taskIdx].copy(description = value)
+                                            }
+                                        )
                                     }
                                 },
                                 label = { Text("Opis zadania ${taskIdx + 1}") },
@@ -94,10 +99,10 @@ fun CustomTrainingScreen(
                             Row {
                                 if (dayInput.tasks.size > 1) {
                                     TextButton(onClick = {
-                                        days = days.mapIndexed { i, d ->
-                                            if (i == dayIdx)
-                                                d.copy(tasks = d.tasks.filterIndexed { j, _ -> j != taskIdx })
-                                            else d
+                                        days = days.toMutableList().apply {
+                                            this[dayIdx] = this[dayIdx].copy(
+                                                tasks = this[dayIdx].tasks.filterIndexed { j, _ -> j != taskIdx }
+                                            )
                                         }
                                     }) {
                                         Text("Usuń zadanie")
@@ -106,10 +111,10 @@ fun CustomTrainingScreen(
                             }
                         }
                         OutlinedButton(onClick = {
-                            days = days.mapIndexed { i, d ->
-                                if (i == dayIdx)
-                                    d.copy(tasks = d.tasks + TrainingTaskInput("", ""))
-                                else d
+                            days = days.toMutableList().apply {
+                                this[dayIdx] = this[dayIdx].copy(
+                                    tasks = this[dayIdx].tasks + TrainingTaskInput("", "")
+                                )
                             }
                         }) {
                             Text("Dodaj zadanie")
@@ -136,14 +141,30 @@ fun CustomTrainingScreen(
                 Text("Dodaj dzień")
             }
 
-            if (errorMsg.isNotEmpty()) {
-                Text(errorMsg, color = MaterialTheme.colorScheme.error)
-                Spacer(modifier = Modifier.height(8.dp))
+            if (infoMsg.isNotEmpty()) {
+                Text(
+                    infoMsg,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
             }
+
+            if (errorMsg.isNotEmpty()) {
+                Text(
+                    errorMsg,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
+
             Spacer(modifier = Modifier.height(76.dp))
         }
+
         Button(
             onClick = {
+                errorMsg = ""
+                infoMsg = ""
+
                 if (trainingName.isBlank() || days.any { it.dayName.isBlank() || it.tasks.any { t -> t.name.isBlank() || t.description.isBlank() } }) {
                     errorMsg = "Wszystkie pola muszą być wypełnione"
                 } else {
@@ -163,10 +184,18 @@ fun CustomTrainingScreen(
                         trainingName,
                         daysModel,
                         onSuccess = {
-                            errorMsg = ""
+                            infoMsg = "Stworzono i zapisano trening!"
+
+                            trainingName = ""
+                            days = listOf(
+                                TrainingDayInput("Dzień 1", listOf(TrainingTaskInput("", "")))
+                            )
+
                             onTrainingSaved()
                         },
-                        onError = { errorMsg = it.message ?: "Błąd zapisu" }
+                        onError = {
+                            errorMsg = it.message ?: "Błąd zapisu"
+                        }
                     )
                 }
             },
