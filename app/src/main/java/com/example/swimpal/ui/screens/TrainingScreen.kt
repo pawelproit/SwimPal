@@ -18,7 +18,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.swimpal.viewmodel.TrainingViewModel
 import com.example.swimpal.model.Training
-import com.example.swimpal.ui.components.*
+import com.example.swimpal.ui.components.GeneratedFilterDropdown
+import com.example.swimpal.ui.components.TrainingCard
+import com.example.swimpal.ui.components.TrainingCompleteDialog
+import com.example.swimpal.ui.components.TrainingDeleteDialog
+import com.example.swimpal.ui.components.globalOpis
 
 @Composable
 fun TrainingScreen(
@@ -37,6 +41,9 @@ fun TrainingScreen(
     var completeRating by remember { mutableStateOf(3) }
     var completeNote by remember { mutableStateOf("") }
     var isCompleting by remember { mutableStateOf(false) }
+
+    var selectedGeneratedFilter by remember { mutableStateOf("Wszystko") }
+    val availableFilters = listOf("Wszystko", "Sprinty", "Open Water", "Technika", "Triathlon")
 
     Box(
         modifier = Modifier
@@ -113,6 +120,45 @@ fun TrainingScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            Text(
+                text = "🤖 Treningi generowane",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            GeneratedFilterDropdown(
+                selected = selectedGeneratedFilter,
+                options = availableFilters,
+                onSelectedChange = { selectedGeneratedFilter = it }
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            val filteredGenerated = when (selectedGeneratedFilter) {
+                "Wszystko" -> generatedTrainings
+                else -> generatedTrainings.filter { it.type == selectedGeneratedFilter }
+            }
+
+            TrainingSection(
+                title = "",
+                trainings = filteredGenerated,
+                expandedTrainings = expandedTrainings,
+                onDeleteClick = { trainingId ->
+                    trainingToDelete = Pair(trainingId, "generated_trainings")
+                    showDeleteDialog = true
+                },
+                onCompleteClick = { training ->
+                    trainingToComplete = Pair(training, "generated_trainings")
+                    completeRating = 3
+                    completeNote = ""
+                    showCompleteDialog = true
+                }
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
             TrainingSection(
                 title = "💪 Treningi własne",
                 trainings = customTrainings,
@@ -123,24 +169,6 @@ fun TrainingScreen(
                 },
                 onCompleteClick = { training ->
                     trainingToComplete = Pair(training, "custom_trainings")
-                    completeRating = 3
-                    completeNote = ""
-                    showCompleteDialog = true
-                }
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            TrainingSection(
-                title = "🤖 Treningi generowane",
-                trainings = generatedTrainings,
-                expandedTrainings = expandedTrainings,
-                onDeleteClick = { trainingId ->
-                    trainingToDelete = Pair(trainingId, "generated_trainings")
-                    showDeleteDialog = true
-                },
-                onCompleteClick = { training ->
-                    trainingToComplete = Pair(training, "generated_trainings")
                     completeRating = 3
                     completeNote = ""
                     showCompleteDialog = true
@@ -237,13 +265,15 @@ private fun TrainingSection(
     onCompleteClick: (Training) -> Unit
 ) {
     Column {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-        Spacer(modifier = Modifier.height(12.dp))
+        if (title.isNotEmpty()) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+        }
 
         if (trainings.isEmpty()) {
             Card(
@@ -268,7 +298,11 @@ private fun TrainingSection(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "Brak ${title.lowercase().replace("💪 ", "").replace("🤖 ", "")}",
+                            text = if (title.isNotEmpty()) {
+                                "Brak ${title.lowercase().replace("💪 ", "").replace("🤖 ", "")}"
+                            } else {
+                                "Brak treningów"
+                            },
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

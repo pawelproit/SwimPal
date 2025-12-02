@@ -21,9 +21,9 @@ class TrainingRepository {
     private val _generatedTrainings = MutableStateFlow<List<Training>>(emptyList())
     val generatedTrainings: StateFlow<List<Training>> = _generatedTrainings
 
-    private fun toMap(training: Training): Map<String, Any> = mapOf(
-        "name" to training.name,
-        "days" to training.days.map { day ->
+    private fun toMap(training: Training): Map<String, Any> = buildMap {
+        put("name", training.name)
+        put("days", training.days.map { day ->
             mapOf(
                 "dayName" to day.dayName,
                 "tasks" to day.tasks.map { task ->
@@ -34,9 +34,15 @@ class TrainingRepository {
                     )
                 }
             )
-        },
-        "creationDate" to training.creationDate
-    )
+        })
+        put("creationDate", training.creationDate)
+        if (training.type.isNotEmpty()) {
+            put("type", training.type)
+        }
+        training.completedDate?.let { put("completedDate", it) }
+        training.rating?.let { put("rating", it) }
+        training.note?.let { put("note", it) }
+    }
 
     fun fetchCustomTrainings() {
         user?.let { u ->
@@ -84,7 +90,12 @@ class TrainingRepository {
             return
         }
         val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-        val training = Training(name = trainingName, days = days, creationDate = today)
+        val training = Training(
+            name = trainingName,
+            type = "",
+            days = days,
+            creationDate = today
+        )
 
         db.collection("users")
             .document(u.uid)
@@ -96,6 +107,7 @@ class TrainingRepository {
 
     fun saveGeneratedTraining(
         trainingName: String,
+        trainingType: String,
         days: List<TrainingDay>,
         onSuccess: () -> Unit,
         onError: (Exception) -> Unit
@@ -106,7 +118,12 @@ class TrainingRepository {
             return
         }
         val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-        val training = Training(name = trainingName, days = days, creationDate = today)
+        val training = Training(
+            name = trainingName,
+            type = trainingType,
+            days = days,
+            creationDate = today
+        )
 
         db.collection("users")
             .document(u.uid)
@@ -186,8 +203,12 @@ class TrainingRepository {
         return Training(
             id = id,
             name = map["name"] as? String ?: "",
+            type = map["type"] as? String ?: "",
             days = days,
-            creationDate = map["creationDate"] as? String ?: ""
+            creationDate = map["creationDate"] as? String ?: "",
+            completedDate = map["completedDate"] as? String?,
+            rating = (map["rating"] as? Long)?.toInt(),
+            note = map["note"] as? String
         )
     }
 }

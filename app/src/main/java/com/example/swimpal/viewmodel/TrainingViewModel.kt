@@ -44,6 +44,7 @@ class TrainingViewModel : ViewModel() {
             onSuccess = { trainingDays ->
                 trainingRepo.saveGeneratedTraining(
                     trainingName = "$type – poziom $difficulty ($days dni)",
+                    trainingType = type,           // WAŻNE: zapisujemy typ
                     days = trainingDays,
                     onSuccess = {
                         statsRepo.incrementGeneratedCount(onSuccess)
@@ -61,7 +62,9 @@ class TrainingViewModel : ViewModel() {
         onSuccess: () -> Unit,
         onError: (Exception) -> Unit
     ) {
-        trainingRepo.saveCustomTraining(trainingName, days,
+        trainingRepo.saveCustomTraining(
+            trainingName,
+            days,
             onSuccess = {
                 statsRepo.incrementCustomCount(onSuccess)
             },
@@ -86,7 +89,10 @@ class TrainingViewModel : ViewModel() {
         onSuccess: () -> Unit,
         onError: (Exception) -> Unit
     ) {
-        historyRepo.addToHistory(training, rating, note,
+        historyRepo.addToHistory(
+            training,
+            rating,
+            note,
             onSuccess = {
                 trainingRepo.deleteTraining(training.id, collectionName, onSuccess, onError)
             },
