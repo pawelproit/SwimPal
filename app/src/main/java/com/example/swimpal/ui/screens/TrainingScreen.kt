@@ -3,6 +3,7 @@ package com.example.swimpal.ui.screens
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -10,11 +11,15 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.swimpal.viewmodel.TrainingViewModel
 import com.example.swimpal.model.Training
 import com.example.swimpal.ui.components.*
+
 @Composable
 fun TrainingScreen(
     trainingViewModel: TrainingViewModel = viewModel()
@@ -33,65 +38,133 @@ fun TrainingScreen(
     var completeNote by remember { mutableStateOf("") }
     var isCompleting by remember { mutableStateOf(false) }
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState())
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFFE1F5FE),
+                        Color(0xFFF0F8FF)
+                    )
+                )
+            )
     ) {
-        Text("Ekran Treningów", style = MaterialTheme.typography.titleLarge)
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Card(
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp)
-                .clickable { expandedTrainings["opis"] = !(expandedTrainings["opis"] ?: false) }
+                .fillMaxSize()
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState())
         ) {
-            Column(modifier = Modifier.padding(12.dp)) {
-                Text(text = "Opis zadań", style = MaterialTheme.typography.titleMedium)
-                AnimatedVisibility(
-                    visible = expandedTrainings["opis"] ?: false,
-                    enter = expandVertically(),
-                    exit = shrinkVertically()
+            Text(
+                text = "Moje Treningi",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Zarządzaj swoimi planami treningowymi",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.secondary
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp)
+                    .clickable { expandedTrainings["opis"] = !(expandedTrainings["opis"] ?: false) },
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.White
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "📚 Opis zadań",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = if (expandedTrainings["opis"] == true) "▲" else "▼",
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    AnimatedVisibility(
+                        visible = expandedTrainings["opis"] ?: false,
+                        enter = expandVertically(),
+                        exit = shrinkVertically()
+                    ) {
+                        Text(
+                            text = globalOpis,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 12.dp)
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            TrainingSection(
+                title = "💪 Treningi własne",
+                trainings = customTrainings,
+                expandedTrainings = expandedTrainings,
+                onDeleteClick = { trainingId ->
+                    trainingToDelete = Pair(trainingId, "custom_trainings")
+                    showDeleteDialog = true
+                },
+                onCompleteClick = { training ->
+                    trainingToComplete = Pair(training, "custom_trainings")
+                    completeRating = 3
+                    completeNote = ""
+                    showCompleteDialog = true
+                }
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            TrainingSection(
+                title = "🤖 Treningi generowane",
+                trainings = generatedTrainings,
+                expandedTrainings = expandedTrainings,
+                onDeleteClick = { trainingId ->
+                    trainingToDelete = Pair(trainingId, "generated_trainings")
+                    showDeleteDialog = true
+                },
+                onCompleteClick = { training ->
+                    trainingToComplete = Pair(training, "generated_trainings")
+                    completeRating = 3
+                    completeNote = ""
+                    showCompleteDialog = true
+                }
+            )
+
+            if (errorMsg.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    )
                 ) {
                     Text(
-                        text = globalOpis,
+                        text = errorMsg,
+                        color = MaterialTheme.colorScheme.onErrorContainer,
                         style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(top = 8.dp)
+                        modifier = Modifier.padding(16.dp)
                     )
                 }
             }
-        }
 
-        TrainingSection(
-            title = "Treningi własne",
-            trainings = customTrainings,
-            expandedTrainings = expandedTrainings,
-            onDeleteClick = { trainingId ->
-                trainingToDelete = Pair(trainingId, "custom_trainings"); showDeleteDialog = true
-            },
-            onCompleteClick = { training ->
-                trainingToComplete = Pair(training, "custom_trainings"); completeRating = 3; completeNote = ""; showCompleteDialog = true
-            }
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        TrainingSection(
-            title = "Treningi generowane",
-            trainings = generatedTrainings,
-            expandedTrainings = expandedTrainings,
-            onDeleteClick = { trainingId ->
-                trainingToDelete = Pair(trainingId, "generated_trainings"); showDeleteDialog = true
-            },
-            onCompleteClick = { training ->
-                trainingToComplete = Pair(training, "generated_trainings"); completeRating = 3; completeNote = ""; showCompleteDialog = true
-            }
-        )
-
-        if (errorMsg.isNotEmpty()) {
-            Text(errorMsg, color = MaterialTheme.colorScheme.error)
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 
@@ -99,12 +172,21 @@ fun TrainingScreen(
         show = showDeleteDialog && trainingToDelete != null,
         onConfirm = {
             val (trainingId, collection) = trainingToDelete!!
-            showDeleteDialog = false; trainingToDelete = null
-            trainingViewModel.deleteTraining(trainingId, collection, onSuccess = {}, onError = { e ->
-                errorMsg = "Błąd podczas usuwania treningu: ${e.message}"
-            })
+            showDeleteDialog = false
+            trainingToDelete = null
+            trainingViewModel.deleteTraining(
+                trainingId,
+                collection,
+                onSuccess = {},
+                onError = { e ->
+                    errorMsg = "Błąd podczas usuwania treningu: ${e.message}"
+                }
+            )
         },
-        onDismiss = { showDeleteDialog = false; trainingToDelete = null }
+        onDismiss = {
+            showDeleteDialog = false
+            trainingToDelete = null
+        }
     )
 
     TrainingCompleteDialog(
@@ -118,7 +200,10 @@ fun TrainingScreen(
             isCompleting = true
             val (training, collection) = trainingToComplete!!
             trainingViewModel.completeTraining(
-                training, collection, completeRating, completeNote,
+                training,
+                collection,
+                completeRating,
+                completeNote,
                 onSuccess = {
                     isCompleting = false
                     showCompleteDialog = false
@@ -134,7 +219,12 @@ fun TrainingScreen(
                 }
             )
         },
-        onDismiss = { if (!isCompleting) { showCompleteDialog = false; trainingToComplete = null } }
+        onDismiss = {
+            if (!isCompleting) {
+                showCompleteDialog = false
+                trainingToComplete = null
+            }
+        }
     )
 }
 
@@ -146,18 +236,57 @@ private fun TrainingSection(
     onDeleteClick: (String) -> Unit,
     onCompleteClick: (Training) -> Unit
 ) {
-    Text(title, style = MaterialTheme.typography.titleMedium)
-    if (trainings.isEmpty()) {
-        Text("Brak ${title.lowercase()}")
-    } else {
-        trainings.forEach { training ->
-            TrainingCard(
-                training = training,
-                expanded = expandedTrainings[training.id] ?: false,
-                onExpandClick = { expandedTrainings[training.id] = !(expandedTrainings[training.id] ?: false) },
-                onDeleteClick = { onDeleteClick(training.id) },
-                onCompleteClick = { onCompleteClick(training) }
-            )
+    Column {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+
+        if (trainings.isEmpty()) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.White
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(32.dp),
+                    contentAlignment = androidx.compose.ui.Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "📭",
+                            style = MaterialTheme.typography.headlineLarge
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Brak ${title.lowercase().replace("💪 ", "").replace("🤖 ", "")}",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        } else {
+            trainings.forEach { training ->
+                TrainingCard(
+                    training = training,
+                    expanded = expandedTrainings[training.id] ?: false,
+                    onExpandClick = {
+                        expandedTrainings[training.id] = !(expandedTrainings[training.id] ?: false)
+                    },
+                    onDeleteClick = { onDeleteClick(training.id) },
+                    onCompleteClick = { onCompleteClick(training) }
+                )
+            }
         }
     }
 }

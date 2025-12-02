@@ -1,5 +1,6 @@
 package com.example.swimpal.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -11,6 +12,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -69,26 +72,32 @@ fun MainScreen(
     when (profileState) {
         is ProfileState.Loading -> {
             Box(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background),
                 contentAlignment = Alignment.Center
             ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    CircularProgressIndicator()
+                    CircularProgressIndicator(
+                        color = MaterialTheme.colorScheme.primary
+                    )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         text = "Ładowanie profilu...",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                 }
             }
         }
         is ProfileState.Error -> {
             Box(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background),
                 contentAlignment = Alignment.Center
             ) {
                 Column(
@@ -98,7 +107,8 @@ fun MainScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         text = "Błąd ładowania danych",
-                        style = MaterialTheme.typography.bodyLarge
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
@@ -106,14 +116,11 @@ fun MainScreen(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.error
                     )
-
                 }
             }
         }
         is ProfileState.Success -> {
             val profile = (profileState as ProfileState.Success).userProfile
-
-
             MainScreenContent(
                 profile = profile,
                 onNavigateToGenerate = onNavigateToGenerate,
@@ -123,10 +130,12 @@ fun MainScreen(
         }
         else -> {
             Box(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator()
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
         }
     }
@@ -135,12 +144,18 @@ fun MainScreen(
         AlertDialog(
             onDismissRequest = { showBirthdayDialog = false },
             confirmButton = {
-                Button(onClick = { showBirthdayDialog = false }) {
+                Button(
+                    onClick = { showBirthdayDialog = false },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary
+                    )
+                ) {
                     Text("Miłego dnia!")
                 }
             },
             title = { Text("Wszystkiego najlepszego! 🎉") },
-            text = { Text("Z okazji Twoich urodzin życzymy Ci samych sukcesów i świetnych treningów!") }
+            text = { Text("Z okazji Twoich urodzin życzymy Ci samych sukcesów i świetnych treningów!") },
+            containerColor = MaterialTheme.colorScheme.surface
         )
     }
 }
@@ -152,56 +167,72 @@ fun MainScreenContent(
     onNavigateToTraining: () -> Unit,
     onNavigateToHistory: () -> Unit
 ) {
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp)
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFFE1F5FE), // Bardzo jasny błękit na górze
+                        Color(0xFFF0F8FF)  // Alice blue na dole
+                    )
+                )
+            )
     ) {
-        GreetingSection(userName = profile.firstName)
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp)
+        ) {
+            GreetingSection(userName = profile.firstName)
 
-        Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-        StatsSection(
-            totalCount = profile.totalCount,
-            activeDays = profile.activeDays,
-            currentStreak = profile.currentStreak
-        )
+            StatsSection(
+                totalCount = profile.totalCount,
+                activeDays = profile.activeDays,
+                currentStreak = profile.currentStreak
+            )
 
-        Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-        QuickActionsSection(
-            onGenerateClick = onNavigateToGenerate,
-            onTrainingsClick = onNavigateToTraining,
-            onHistoryClick = onNavigateToHistory
-        )
+            QuickActionsSection(
+                onGenerateClick = onNavigateToGenerate,
+                onTrainingsClick = onNavigateToTraining,
+                onHistoryClick = onNavigateToHistory
+            )
 
-        Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-        WeeklyGoalCard(
-            completedTrainings = profile.totalCount,
-            goalTrainings = 4
-        )
+            WeeklyGoalCard(
+                completedTrainings = profile.totalCount,
+                goalTrainings = 4
+            )
 
-        Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-        AchievementsSection(badges = profile.badges.filter { it.achieved })
+            AchievementsSection(badges = profile.badges.filter { it.achieved })
+
+            Spacer(modifier = Modifier.height(16.dp))
+        }
     }
 }
 
 @Composable
-fun GreetingSection(userName: String) {
+fun GreetingSection(userName: String?) {
     Column {
         Text(
-            text = "👋 Cześć, $userName!",
+            text = "👋 Cześć${if (!userName.isNullOrBlank()) ", $userName" else ""}!",
             style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = "\"Każdy trening zbliża Cię do celu\"",
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.secondary
         )
     }
 }
@@ -210,15 +241,19 @@ fun GreetingSection(userName: String) {
 fun StatsSection(totalCount: Int, activeDays: Int, currentStreak: Int) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        )
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(20.dp)
         ) {
             Text(
                 text = "📊 Twoje statystyki",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.height(16.dp))
             Row(
@@ -242,7 +277,8 @@ fun StatItem(icon: String, value: String, label: String) {
         Text(
             text = value,
             style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary
         )
         Text(
             text = label,
@@ -262,7 +298,8 @@ fun QuickActionsSection(
         Text(
             text = "🚀 Szybkie akcje",
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground
         )
         Spacer(modifier = Modifier.height(12.dp))
         Row(
@@ -313,7 +350,10 @@ fun QuickActionButton(
     Card(
         modifier = modifier.height(100.dp),
         onClick = onClick,
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        )
     ) {
         Column(
             modifier = Modifier
@@ -333,7 +373,8 @@ fun QuickActionButton(
                 text = label,
                 style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.Medium,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }
@@ -343,28 +384,35 @@ fun QuickActionButton(
 fun WeeklyGoalCard(completedTrainings: Int, goalTrainings: Int) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        )
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(20.dp)
         ) {
             Text(
                 text = "🎯 Cel tygodnia",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.height(12.dp))
             Text(
                 text = "$completedTrainings / $goalTrainings treningów",
-                style = MaterialTheme.typography.bodyLarge
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.height(8.dp))
             LinearProgressIndicator(
                 progress = { (completedTrainings.toFloat() / goalTrainings).coerceIn(0f, 1f) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(8.dp)
-                    .clip(RoundedCornerShape(4.dp))
+                    .height(10.dp)
+                    .clip(RoundedCornerShape(5.dp)),
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.primaryContainer
             )
         }
     }
@@ -376,15 +424,19 @@ fun AchievementsSection(badges: List<com.example.swimpal.model.Badge>) {
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        )
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(20.dp)
         ) {
             Text(
                 text = "🏆 Ostatnie osiągnięcia",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.height(12.dp))
             badges.take(3).forEach { badge ->
@@ -400,7 +452,8 @@ fun AchievementsSection(badges: List<com.example.swimpal.model.Badge>) {
                         Text(
                             text = badge.name,
                             style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Medium
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
                             text = badge.description,

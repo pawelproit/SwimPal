@@ -1,6 +1,7 @@
 package com.example.swimpal.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -8,6 +9,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.swimpal.model.Training
@@ -65,119 +69,185 @@ fun ProfileScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         modifier = Modifier.fillMaxSize()
     ) { innerPadding ->
-        Column(
+        Box(
             modifier = Modifier
-                .padding(innerPadding)
                 .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFFE1F5FE),
+                            Color(0xFFF0F8FF)
+                        )
+                    )
+                )
         ) {
-            LazyColumn(
+            Column(
                 modifier = Modifier
-                    .weight(1f)
-                    .padding(16.dp)
-                    .fillMaxWidth(),
-                verticalArrangement = Arrangement.Top,
-                contentPadding = PaddingValues(bottom = 16.dp)
+                    .padding(innerPadding)
+                    .fillMaxSize()
             ) {
-                item {
-                    Text("Twój profil", style = MaterialTheme.typography.headlineMedium)
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
+                LazyColumn(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(16.dp)
+                        .fillMaxWidth(),
+                    verticalArrangement = Arrangement.Top,
+                    contentPadding = PaddingValues(bottom = 16.dp)
+                ) {
+                    item {
+                        Text(
+                            text = "👤 Twój profil",
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Zarządzaj swoim kontem",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.secondary
+                        )
+                        Spacer(modifier = Modifier.height(24.dp))
+                    }
 
-                item {
-                    ExpandableCard(
-                        title = "Dane",
-                        expanded = expandedData,
-                        onToggle = { expandedData = !expandedData }
-                    ) {
-                        when (profileState) {
-                            is ProfileState.Loading -> Box(
-                                modifier = Modifier.fillMaxWidth(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                CircularProgressIndicator()
-                            }
-                            is ProfileState.Success -> {
-                                val profile = (profileState as ProfileState.Success).userProfile
-                                ProfileUserDataSection(
-                                    profile = profile,
-                                    onProfileChanged = { userProfileViewModel.saveUserProfile(it) }
+                    item {
+                        ExpandableCard(
+                            title = "📝 Dane osobowe",
+                            expanded = expandedData,
+                            onToggle = { expandedData = !expandedData }
+                        ) {
+                            when (profileState) {
+                                is ProfileState.Loading -> Box(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    CircularProgressIndicator(
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                                is ProfileState.Success -> {
+                                    val profile = (profileState as ProfileState.Success).userProfile
+                                    ProfileUserDataSection(
+                                        profile = profile,
+                                        onProfileChanged = { userProfileViewModel.saveUserProfile(it) }
+                                    )
+                                }
+                                is ProfileState.Error -> Text(
+                                    "Błąd: ${(profileState as ProfileState.Error).error}",
+                                    color = MaterialTheme.colorScheme.error
                                 )
+                                else -> Text("Brak danych profilu.")
                             }
-                            is ProfileState.Error -> Text(
-                                "Błąd: ${(profileState as ProfileState.Error).error}",
-                                color = MaterialTheme.colorScheme.error
+                        }
+                    }
+
+                    item {
+                        ExpandableCard(
+                            title = "🏆 Odznaki i osiągnięcia",
+                            expanded = expandedBadges,
+                            onToggle = { expandedBadges = !expandedBadges }
+                        ) {
+                            when (profileState) {
+                                is ProfileState.Success -> {
+                                    val profile = (profileState as ProfileState.Success).userProfile
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Text(
+                                        text = "📊 Statystyki",
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Row {
+                                        Text(
+                                            "Custom: ${profile.customCount}",
+                                            modifier = Modifier.weight(1f),
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        Text(
+                                            "Generowane: ${profile.generatedCount}",
+                                            modifier = Modifier.weight(1f),
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                    Row {
+                                        Text(
+                                            "Wszystkie: ${profile.totalCount}",
+                                            modifier = Modifier.weight(1f),
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        Text(
+                                            "Dni w app: ${profile.activeDays}",
+                                            modifier = Modifier.weight(1f),
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    BadgeCategoryScrollable(
+                                        "💪 Customowe",
+                                        profile.badges.filter { it.name.startsWith("Custom") }
+                                    )
+                                    BadgeCategoryScrollable(
+                                        "🤖 Generowane",
+                                        profile.badges.filter { it.name.startsWith("Generated") }
+                                    )
+                                    BadgeCategoryScrollable(
+                                        "🎯 Wszystkie",
+                                        profile.badges.filter { it.name.startsWith("Total") }
+                                    )
+                                    BadgeCategoryScrollable(
+                                        "📅 Dni aktywności",
+                                        profile.badges.filter { it.name.startsWith("Days") }
+                                    )
+                                }
+                                else -> Text("Brak danych odznak.")
+                            }
+                        }
+                    }
+
+                    item {
+                        ExpandableCard(
+                            title = "🎥 Instruktaż wideo",
+                            expanded = expandedVideo,
+                            onToggle = { expandedVideo = !expandedVideo }
+                        ) {
+                            LocalVideoPlayer(
+                                resId = com.example.swimpal.R.raw.instruktaz,
+                                title = "Instruktaż pływania – 18 minut",
+                                modifier = Modifier.padding(top = 4.dp)
                             )
-                            else -> Text("Brak danych profilu.")
+                        }
+                    }
+
+                    item {
+                        ExpandableCard(
+                            title = "📜 Historia treningów",
+                            expanded = expandedHistory,
+                            onToggle = { expandedHistory = !expandedHistory }
+                        ) {
+                            TrainingHistorySection(
+                                historyTrainings = historyTrainings,
+                                expandedHistoryTrainings = expandedHistoryTrainings
+                            )
                         }
                     }
                 }
 
-                item {
-                    ExpandableCard(
-                        title = "Odznaki",
-                        expanded = expandedBadges,
-                        onToggle = { expandedBadges = !expandedBadges }
-                    ) {
-                        when (profileState) {
-                            is ProfileState.Success -> {
-                                val profile = (profileState as ProfileState.Success).userProfile
-                                Spacer(modifier = Modifier.height(6.dp))
-                                Text("Statystyki", style = MaterialTheme.typography.titleSmall)
-                                Spacer(modifier = Modifier.height(6.dp))
-                                Row {
-                                    Text("Custom: ${profile.customCount}", modifier = Modifier.weight(1f))
-                                    Text("Generowane: ${profile.generatedCount}", modifier = Modifier.weight(1f))
-                                }
-                                Row {
-                                    Text("Wszystkie: ${profile.totalCount}", modifier = Modifier.weight(1f))
-                                    Text("Dni w app: ${profile.activeDays}", modifier = Modifier.weight(1f))
-                                }
-                                Spacer(modifier = Modifier.height(12.dp))
-                                BadgeCategoryScrollable("Customowe", profile.badges.filter { it.name.startsWith("Custom") })
-                                BadgeCategoryScrollable("Generowane", profile.badges.filter { it.name.startsWith("Generated") })
-                                BadgeCategoryScrollable("Wszystkie", profile.badges.filter { it.name.startsWith("Total") })
-                                BadgeCategoryScrollable("Dni aktywności", profile.badges.filter { it.name.startsWith("Days") })
-                            }
-                            else -> Text("Brak danych odznak.")
-                        }
-                    }
+                Button(
+                    onClick = onLogout,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                        .height(50.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text(
+                        text = "🚪 Wyloguj się",
+                        fontWeight = FontWeight.Bold
+                    )
                 }
-
-                item {
-                    ExpandableCard(
-                        title = "Wideo",
-                        expanded = expandedVideo,
-                        onToggle = { expandedVideo = !expandedVideo }
-                    ) {
-                        LocalVideoPlayer(
-                            resId = com.example.swimpal.R.raw.instruktaz,
-                            title = "Instruktaż pływania – 18 minut",
-                            modifier = Modifier.padding(top = 4.dp)
-                        )
-                    }
-                }
-
-                item {
-                    ExpandableCard(
-                        title = "Historia treningów",
-                        expanded = expandedHistory,
-                        onToggle = { expandedHistory = !expandedHistory }
-                    ) {
-                        TrainingHistorySection(
-                            historyTrainings = historyTrainings,
-                            expandedHistoryTrainings = expandedHistoryTrainings
-                        )
-                    }
-                }
-            }
-
-            Button(
-                onClick = onLogout,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
-            ) {
-                Text("Wyloguj się")
             }
         }
     }
@@ -189,7 +259,21 @@ private fun TrainingHistorySection(
     expandedHistoryTrainings: MutableMap<String, Boolean>
 ) {
     if (historyTrainings.isEmpty()) {
-        Text("Brak historii treningów")
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(text = "📭", style = MaterialTheme.typography.headlineLarge)
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Brak historii treningów",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
     } else {
         historyTrainings.forEach { training ->
             val expanded = expandedHistoryTrainings[training.id] ?: false
@@ -204,61 +288,77 @@ private fun TrainingHistorySection(
                     Text(
                         text = training.name,
                         style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.weight(1f)
                     )
-                    Text(if (expanded) "▲" else "▼")
+                    Text(
+                        text = if (expanded) "▲" else "▼",
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 }
 
                 if (training.creationDate.isNotBlank()) {
                     Text(
-                        text = "Utworzono: ${formatDate(training.creationDate)}",
-                        style = MaterialTheme.typography.bodySmall
+                        text = "🗓️ Utworzono: ${formatDate(training.creationDate)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
                 if (!training.completedDate.isNullOrBlank()) {
                     Text(
-                        text = "Ukończono: ${formatDate(training.completedDate)}",
-                        style = MaterialTheme.typography.bodySmall
+                        text = "✅ Ukończono: ${formatDate(training.completedDate)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
                 Text(
-                    text = "Ocena: ${training.rating ?: 0}/5",
-                    style = MaterialTheme.typography.bodySmall
+                    text = "⭐ Ocena: ${training.rating ?: 0}/5",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 if (!training.note.isNullOrBlank()) {
                     Text(
-                        text = "Notatka: ${training.note}",
-                        style = MaterialTheme.typography.bodySmall
+                        text = "📝 Notatka: ${training.note}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
                 AnimatedVisibility(visible = expanded) {
-                    Column {
+                    Column(modifier = Modifier.padding(top = 8.dp)) {
                         training.days.forEachIndexed { dayIdx, day ->
                             Text(
                                 text = "Dzień ${dayIdx + 1}",
                                 style = MaterialTheme.typography.labelLarge,
-                                modifier = Modifier.padding(top = 8.dp, bottom = 2.dp)
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
                             )
                             day.tasks.sortedBy { it.order }.forEach { task ->
                                 Text(
                                     text = "${task.order}. ${task.name}",
                                     style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurface,
                                     modifier = Modifier.padding(start = 16.dp)
                                 )
                                 Text(
                                     text = "Opis: ${task.description}",
                                     style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.padding(start = 16.dp, bottom = 4.dp)
                                 )
                             }
                         }
                     }
                 }
-                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                HorizontalDivider(
+                    modifier = Modifier.padding(vertical = 8.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant
+                )
             }
         }
     }
