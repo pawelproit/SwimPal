@@ -211,13 +211,90 @@ fun ProfileScreen(
                             expanded = expandedVideo,
                             onToggle = { expandedVideo = !expandedVideo }
                         ) {
-                            LocalVideoPlayer(
-                                resId = com.example.swimpal.R.raw.instruktaz,
-                                title = "Instruktaż pływania – 18 minut",
-                                modifier = Modifier.padding(top = 4.dp)
+                            val baseUrl = "https://pawelproit.github.io/swimpal-videos/videos"
+
+                            val videoCategories = mapOf(
+                                "Kraul" to listOf(
+                                    "$baseUrl/kraul/kraul.mp4" to "Nogi w kraulu"
+                                ),
+                                "Żaba" to listOf(
+                                    "$baseUrl/kraul/kraulW.mp4" to "Pełna technika żabki"
+                                ),
+                                "Grzbiet" to listOf(
+                                    "$baseUrl/grzbiet/grzbiet.mp4" to "Styl grzbietowy"
+                                ),
+                                "Ćwiczenia" to listOf(
+                                    "$baseUrl/cwiczenia/pozcyja_torpedowa.mp4" to "Pozycja torpedowa"
+                                )
                             )
+
+                            var expandedCategories by remember { mutableStateOf(setOf<String>()) }
+
+                            Column(
+                                modifier = Modifier.padding(top = 4.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                videoCategories.forEach { (categoryName, videos) ->
+                                    Surface(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                expandedCategories =
+                                                    if (categoryName in expandedCategories) {
+                                                        expandedCategories - categoryName
+                                                    } else {
+                                                        expandedCategories + categoryName
+                                                    }
+                                            },
+                                        shape = MaterialTheme.shapes.medium,
+                                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(16.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = categoryName,
+                                                style = MaterialTheme.typography.titleMedium,
+                                                fontWeight = FontWeight.Bold,
+                                                modifier = Modifier.weight(1f),
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                            Text(
+                                                text = if (categoryName in expandedCategories) "▲" else "▼",
+                                                style = MaterialTheme.typography.titleMedium,
+                                                color = MaterialTheme.colorScheme.primary
+                                            )
+                                        }
+                                    }
+
+                                    if (categoryName in expandedCategories) {
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        videos.forEach { (url, title) ->
+                                            Card(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(horizontal = 8.dp),
+                                                colors = CardDefaults.cardColors(
+                                                    containerColor = MaterialTheme.colorScheme.surface
+                                                )
+                                            ) {
+                                                NetworkVideoPlayer(
+                                                    videoUrl = url,
+                                                    title = title,
+                                                    modifier = Modifier.padding(12.dp)
+                                                )
+                                            }
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
+
 
                     item {
                         ExpandableCard(
