@@ -42,6 +42,8 @@ fun ProfileScreen(
     val historyTrainings by trainingViewModel.historyTrainings.collectAsState(initial = emptyList())
     val expandedHistoryTrainings = remember { mutableStateMapOf<String, Boolean>() }
 
+    var selectedVideoKey by remember { mutableStateOf<String?>(null) }
+
     LaunchedEffect(Unit) {
         userProfileViewModel.loadUserProfile()
     }
@@ -211,87 +213,7 @@ fun ProfileScreen(
                             expanded = expandedVideo,
                             onToggle = { expandedVideo = !expandedVideo }
                         ) {
-                            val baseUrl = "https://pawelproit.github.io/swimpal-videos/videos"
-
-                            val videoCategories = mapOf(
-                                "Kraul" to listOf(
-                                    "$baseUrl/kraul/kraul.mp4" to "Nogi w kraulu"
-                                ),
-                                "Żaba" to listOf(
-                                    "$baseUrl/kraul/kraulW.mp4" to "Pełna technika żabki"
-                                ),
-                                "Grzbiet" to listOf(
-                                    "$baseUrl/grzbiet/grzbiet.mp4" to "Styl grzbietowy"
-                                ),
-                                "Ćwiczenia" to listOf(
-                                    "$baseUrl/cwiczenia/pozcyja_torpedowa.mp4" to "Pozycja torpedowa"
-                                )
-                            )
-
-                            var expandedCategories by remember { mutableStateOf(setOf<String>()) }
-
-                            Column(
-                                modifier = Modifier.padding(top = 4.dp),
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                videoCategories.forEach { (categoryName, videos) ->
-                                    Surface(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clickable {
-                                                expandedCategories =
-                                                    if (categoryName in expandedCategories) {
-                                                        expandedCategories - categoryName
-                                                    } else {
-                                                        expandedCategories + categoryName
-                                                    }
-                                            },
-                                        shape = MaterialTheme.shapes.medium,
-                                        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-                                    ) {
-                                        Row(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(16.dp),
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Text(
-                                                text = categoryName,
-                                                style = MaterialTheme.typography.titleMedium,
-                                                fontWeight = FontWeight.Bold,
-                                                modifier = Modifier.weight(1f),
-                                                color = MaterialTheme.colorScheme.onSurface
-                                            )
-                                            Text(
-                                                text = if (categoryName in expandedCategories) "▲" else "▼",
-                                                style = MaterialTheme.typography.titleMedium,
-                                                color = MaterialTheme.colorScheme.primary
-                                            )
-                                        }
-                                    }
-
-                                    if (categoryName in expandedCategories) {
-                                        Spacer(modifier = Modifier.height(4.dp))
-                                        videos.forEach { (url, title) ->
-                                            Card(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(horizontal = 8.dp),
-                                                colors = CardDefaults.cardColors(
-                                                    containerColor = MaterialTheme.colorScheme.surface
-                                                )
-                                            ) {
-                                                NetworkVideoPlayer(
-                                                    videoUrl = url,
-                                                    title = title,
-                                                    modifier = Modifier.padding(12.dp)
-                                                )
-                                            }
-                                            Spacer(modifier = Modifier.height(8.dp))
-                                        }
-                                    }
-                                }
-                            }
+                            VideoSection()
                         }
                     }
 
@@ -329,6 +251,179 @@ fun ProfileScreen(
         }
     }
 }
+@Composable
+private fun VideoSection() {
+    val baseUrl = "https://pawelproit.github.io/swimpal-videos/videos"
+
+    data class VideoItem(
+        val key: String,
+        val title: String,
+        val url: String
+    )
+
+    val videoCategories: Map<String, List<VideoItem>> = mapOf(
+        "Kraul" to listOf(
+            VideoItem("kraul_pelny", "Kraul pełny", "$baseUrl/kraul/pelnyKraul.mp4"),
+            VideoItem("kraul_nogi_deska", "Nogi kraul z deską", "$baseUrl/kraul/nogiKraulZDeska.mp4"),
+            VideoItem("kraul_nogi_bez_deski", "Nogi kraul bez deski", "$baseUrl/kraul/nogiKraulBezDeski.mp4"),
+            VideoItem("kraul_dokladanka_deska", "Dokładanka kraul z deską", "$baseUrl/kraul/dokladankaKraulDeskaUGory.mp4"),
+            VideoItem("kraul_dokladanka_bez_deski", "Dokładanka kraul bez deski", "$baseUrl/kraul/dokladankaKraulBezDeski.mp4"),
+            VideoItem("kraul_dokladanka_deska_w_nogach", "Dokładanka kraul z deską między nogami", "$baseUrl/kraul/dokladankaKraulZDeskaWNogach.mp4"),
+            VideoItem("kraul_rece", "Ręce kraul", "$baseUrl/kraul/ramionaKraul.mp4")
+        ),
+        "Żaba" to listOf(
+            VideoItem("zaba_pelna", "Żaba pełna", "$baseUrl/zaba/pelnaZaba.mp4"),
+            VideoItem("zaba_nogi_deska", "Nogi żaba z deską", "$baseUrl/zaba/nogiZabaDeska.mp4"),
+            VideoItem("zaba_nogi_bez_deski", "Nogi żaba bez deski", "$baseUrl/zaba/nogiZabaBezDeski.mp4"),
+            VideoItem("zaba_piaty_styl", "Żaba i 5 styl", "$baseUrl/zaba/zabaZPiatymStylem.mp4")
+        ),
+        "Grzbiet" to listOf(
+            VideoItem("grzbiet_pelny", "Grzbiet pełny", "$baseUrl/grzbiet/pelnyGrzbiet.mp4"),
+            VideoItem("grzbiet_nogi", "Nogi grzbiet bez deski", "$baseUrl/grzbiet/nogiGrzbietTorpeda.mp4"),
+            VideoItem("grzbiet_nogi_deska_gora", "Nogi grzbiet z deską u góry", "$baseUrl/grzbiet/nogiGrzbietDeskaUGory.mp4"),
+            VideoItem("grzbiet_nogi_deska_dol", "Nogi grzbiet z deska na dole", "$baseUrl/grzbiet/nogiGrzbietDeskaNaDole.mp4"),
+            VideoItem("grzbiet_dokladanka", "Dokładanka do grzbietu", "$baseUrl/grzbiet/dokladankaGrzbietZStrzalka.mp4"),
+            VideoItem("grzbiet_dokladanka_deska_dol", "Dokładanka do grzbietu z deską na dole", "$baseUrl/grzbiet/dokladankaGrzbietDeskaNaDole.mp4"),
+            VideoItem("grzbiet_dokladanka_deska_gora", "Dokładanka do grzbietu z deską u góry", "$baseUrl/grzbiet/dokladankaGrzbietDeskaUGory.mp4"),
+            VideoItem("grzbiet_rece", "Ręce grzbiet", "$baseUrl/grzbiet/Kopia ramiona_grzbiet.mp4"),
+            VideoItem("grzbiet_pelny_piaty_sty;", "Grzbiet i 5 styl", "$baseUrl/grzbiet/pelnyGrzbiet5Styl.mp4")
+        ),
+        "Delfin" to listOf(
+            VideoItem("delfin_pelny", "Delfin pełny", "$baseUrl/delfin/pelnyDelfin.mp4"),
+            VideoItem("delfin_nogi_deska", "Nogi delfin z deską", "$baseUrl/delfin/nogiDelfinZDeska.mp4"),
+            VideoItem("delfin_nogi_bez_deski", "Nogi delfin bez deski", "$baseUrl/delfin/nogiDelfinBezDeski.mp4"),
+            VideoItem("delfin_rece", "Ręce delfin", "$baseUrl/delfin/ramionaDelfin.mp4")
+        ),
+        "Ćwiczenia" to listOf(
+            VideoItem("cw_czucie_wody", "Czucie wody", "$baseUrl/cwiczenia/czucieWodyZDeska.mp4"),
+            VideoItem("cw_glajch", "Glajch", "$baseUrl/cwiczenia/glajchWP.mp4"),
+            VideoItem("cw_kraul_palce", "Ćwiczenie do kraula 1 (koniuszki palców)", "$baseUrl/cwiczenia/cwiczenieKoniuszkiPalcow.mp4"),
+            VideoItem("cw_kraul_pod_woda", "Ćwiczenie do kraula 2 (kraul pod wodą)", "$baseUrl/cwiczenia/kraulPodWoda.mp4")
+        )
+    )
+
+    var expandedCategories by remember { mutableStateOf(setOf<String>()) }
+    var expandedVideos by remember { mutableStateOf(setOf<String>()) }
+
+    Column(
+        modifier = Modifier.padding(top = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        videoCategories.forEach { (categoryName, variants) ->
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        expandedCategories =
+                            if (categoryName in expandedCategories) {
+                                expandedCategories - categoryName
+                            } else {
+                                expandedCategories + categoryName
+                            }
+                    },
+                shape = MaterialTheme.shapes.medium,
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = categoryName,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.weight(1f),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = if (categoryName in expandedCategories) "▲" else "▼",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+
+            if (categoryName in expandedCategories) {
+                Spacer(modifier = Modifier.height(4.dp))
+                variants.forEach { item ->
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp)
+                    ) {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    expandedVideos =
+                                        if (item.key in expandedVideos) {
+                                            expandedVideos - item.key
+                                        } else {
+                                            expandedVideos + item.key
+                                        }
+                                },
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surface
+                            )
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = item.title,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier.weight(1f),
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Text(
+                                    text = if (item.key in expandedVideos) "▲" else "▶",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+
+                        AnimatedVisibility(visible = item.key in expandedVideos) {
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 8.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surface
+                                )
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(12.dp)
+                                ) {
+                                    Text(
+                                        text = item.title,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    NetworkVideoPlayer(
+                                        videoUrl = item.url,
+                                        title = item.title,
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
+            }
+        }
+    }
+}
+
 
 @Composable
 private fun TrainingHistorySection(
