@@ -23,21 +23,47 @@ class UserProfileViewModel : ViewModel() {
     private val _profileState = MutableStateFlow<ProfileState>(ProfileState.Idle)
     val profileState: StateFlow<ProfileState> = _profileState
 
+    private val BADGE_CUSTOM_5 = "Custom 5"
+    private val BADGE_CUSTOM_10 = "Custom 10"
+    private val BADGE_GENERATED_5 = "Generated 5"
+    private val BADGE_GENERATED_10 = "Generated 10"
+    private val BADGE_TOTAL_20 = "Total 20"
+    private val BADGE_TOTAL_50 = "Total 50"
+    private val BADGE_DAYS_5 = "Days 5"
+    private val BADGE_DAYS_20 = "Days 20"
+    private val BADGE_CUSTOM_20 = "Custom 20"
+    private val BADGE_CUSTOM_50 = "Custom 50"
+    private val BADGE_GENERATED_20 = "Generated 20"
+    private val BADGE_GENERATED_50 = "Generated 50"
+    private val BADGE_TOTAL_100 = "Total 100"
+    private val BADGE_DAYS_50 = "Days 50"
+
+
     private fun defaultBadges(
         custom: Int,
         generated: Int,
         total: Int,
         days: Int
     ): List<Badge> = listOf(
-        Badge("Custom 5", "5 treningów własnych", custom >= 5),
-        Badge("Custom 10", "10 treningów własnych", custom >= 10),
-        Badge("Generated 5", "5 treningów generowanych", generated >= 5),
-        Badge("Generated 10", "10 treningów generowanych", generated >= 10),
-        Badge("Total 20", "20 treningów łącznie", total >= 20),
-        Badge("Total 50", "50 treningów łącznie", total >= 50),
-        Badge("Days 5", "5 aktywnych dni", days >= 5),
-        Badge("Days 20", "20 aktywnych dni", days >= 20)
+        Badge(BADGE_CUSTOM_5, "5 treningów własnych", custom >= 5),
+        Badge(BADGE_CUSTOM_10, "10 treningów własnych", custom >= 10),
+        Badge(BADGE_CUSTOM_20, "20 treningów własnych", custom >= 20),
+        Badge(BADGE_CUSTOM_50, "50 treningów własnych", custom >= 50),
+
+        Badge(BADGE_GENERATED_5, "5 treningów generowanych", generated >= 5),
+        Badge(BADGE_GENERATED_10, "10 treningów generowanych", generated >= 10),
+        Badge(BADGE_GENERATED_20, "20 treningów generowanych", generated >= 20),
+        Badge(BADGE_GENERATED_50, "50 treningów generowanych", generated >= 50),
+
+        Badge(BADGE_TOTAL_20, "20 treningów łącznie", total >= 20),
+        Badge(BADGE_TOTAL_50, "50 treningów łącznie", total >= 50),
+        Badge(BADGE_TOTAL_100, "100 treningów łącznie", total >= 100),
+
+        Badge(BADGE_DAYS_5, "5 aktywnych dni", days >= 5),
+        Badge(BADGE_DAYS_20, "20 aktywnych dni", days >= 20),
+        Badge(BADGE_DAYS_50, "50 aktywnych dni", days >= 50)
     )
+
 
     fun saveUserProfile(userProfile: UserProfile) {
         val uid = currentUid ?: return
@@ -59,7 +85,9 @@ class UserProfileViewModel : ViewModel() {
                 _profileState.value = ProfileState.Success(withBadges)
             }
             .addOnFailureListener { e ->
-                _profileState.value = ProfileState.Error(e.localizedMessage ?: "Błąd zapisu profilu")
+                _profileState.value = ProfileState.Error(
+                    e.localizedMessage ?: "Błąd zapisu profilu"
+                )
             }
     }
 
@@ -71,17 +99,31 @@ class UserProfileViewModel : ViewModel() {
             .addOnSuccessListener { doc ->
                 val profile = doc.toObject(UserProfile::class.java)
                 if (profile != null) {
-                    val freshBadges = defaultBadges(
+                    val baseBadges = defaultBadges(
                         profile.customCount,
                         profile.generatedCount,
                         profile.totalCount,
                         profile.activeDays
                     )
 
+                    val oldBadges = profile.badges.associateBy { it.name }
+
+                    val freshBadges = baseBadges.map { newBadge ->
+                        val old = oldBadges[newBadge.name]
+                        val justAchieved =
+                            (old == null || !old.achieved) && newBadge.achieved
+                        newBadge.copy(
+                            isNew = justAchieved
+                        )
+                    }
+
                     val profileWithBadges = profile.copy(badges = freshBadges)
                     _profileState.value = ProfileState.Success(profileWithBadges)
+
                     if (profile.badges != freshBadges) {
-                        firestore.collection("users").document(uid).update("badges", freshBadges)
+                        firestore.collection("users")
+                            .document(uid)
+                            .update("badges", freshBadges)
                     }
                 } else {
                     _profileState.value = ProfileState.Success(
@@ -90,7 +132,9 @@ class UserProfileViewModel : ViewModel() {
                 }
             }
             .addOnFailureListener { e ->
-                _profileState.value = ProfileState.Error(e.localizedMessage ?: "Błąd pobierania profilu")
+                _profileState.value = ProfileState.Error(
+                    e.localizedMessage ?: "Błąd pobierania profilu"
+                )
             }
     }
 
@@ -113,6 +157,4 @@ class UserProfileViewModel : ViewModel() {
             userRef.update("badges", updatedBadges)
         }
     }
-
 }
-

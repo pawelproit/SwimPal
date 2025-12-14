@@ -7,17 +7,20 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.Alignment
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.swimpal.model.TrainingTask
 import com.example.swimpal.model.TrainingDay
-import com.example.swimpal.viewmodel.TrainingViewModel
-import androidx.compose.ui.Alignment
 import com.example.swimpal.model.TrainingDayInput
 import com.example.swimpal.model.TrainingTaskInput
+import com.example.swimpal.viewmodel.TrainingViewModel
+import com.example.swimpal.viewmodel.UserProfileViewModel
+import com.example.swimpal.viewmodel.ProfileState
 
 @Composable
 fun CustomTrainingScreen(
     trainingViewModel: TrainingViewModel = viewModel(),
+    userProfileViewModel: UserProfileViewModel = viewModel(),
     onTrainingSaved: () -> Unit = {}
 ) {
     var trainingName by remember { mutableStateOf("") }
@@ -30,6 +33,21 @@ fun CustomTrainingScreen(
     }
     var errorMsg by remember { mutableStateOf("") }
     var infoMsg by remember { mutableStateOf("") }
+
+    var showBadgeDialog by remember { mutableStateOf(false) }
+    var newBadge by remember { mutableStateOf<Pair<String, String>?>(null) }
+    val profileState by userProfileViewModel.profileState.collectAsState()
+
+    LaunchedEffect(profileState) {
+        if (profileState is ProfileState.Success) {
+            val profile = (profileState as ProfileState.Success).userProfile
+            val newlyAchievedBadge = profile.badges.firstOrNull { it.achieved && it.isNew }
+            if (newlyAchievedBadge != null) {
+                newBadge = newlyAchievedBadge.name to newlyAchievedBadge.description
+                showBadgeDialog = true
+            }
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -165,7 +183,9 @@ fun CustomTrainingScreen(
                 errorMsg = ""
                 infoMsg = ""
 
-                if (trainingName.isBlank() || days.any { it.dayName.isBlank() || it.tasks.any { t -> t.name.isBlank() || t.description.isBlank() } }) {
+                if (trainingName.isBlank() ||
+                    days.any { it.dayName.isBlank() || it.tasks.any { t -> t.name.isBlank() || t.description.isBlank() } }
+                ) {
                     errorMsg = "Wszystkie pola muszą być wypełnione"
                 } else {
                     val daysModel = days.map { dayInput ->
@@ -191,6 +211,8 @@ fun CustomTrainingScreen(
                                 TrainingDayInput("Dzień 1", listOf(TrainingTaskInput("", "")))
                             )
 
+                            userProfileViewModel.loadUserProfile()
+
                             onTrainingSaved()
                         },
                         onError = {
@@ -206,5 +228,26 @@ fun CustomTrainingScreen(
         ) {
             Text("Utwórz i zapisz trening")
         }
+    }
+
+    if (showBadgeDialog && newBadge != null) {
+        AlertDialog(
+            onDismissRequest = {
+                showBadgeDialog = false
+                userProfileViewModel.markBadgeAsSeen(newBadge!!.first)
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showBadgeDialog = false
+                        userProfileViewModel.markBadgeAsSeen(newBadge!!.first)
+                    }
+                ) {
+                    Text("OK")
+                }
+            },
+            title = { Text("🎉 Gratulacje!") },
+            text = { Text("Zdobywasz nową odznakę:\n\n${newBadge!!.first}\n${newBadge!!.second}") }
+        )
     }
 }
