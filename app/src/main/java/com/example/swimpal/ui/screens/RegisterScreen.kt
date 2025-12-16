@@ -1,7 +1,10 @@
 package com.example.swimpal.ui.screens
 
+import android.util.Patterns
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
@@ -26,7 +29,33 @@ fun RegisterScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
-    var passwordError by remember { mutableStateOf(false) }
+
+    val emailError by remember(email) {
+        derivedStateOf {
+            if (email.isBlank()) "Email nie może być pusty"
+            else if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) "Nieprawidłowy email"
+            else null
+        }
+    }
+    val passwordError by remember(password) {
+        derivedStateOf {
+            if (password.isBlank()) "Hasło nie może być puste"
+            else if (password.length < 6) "Hasło musi mieć min. 6 znaków"
+            else null
+        }
+    }
+    val confirmPasswordError by remember(password, confirmPassword) {
+        derivedStateOf {
+            if (confirmPassword.isBlank()) "Potwierdź hasło"
+            else if (password != confirmPassword) "Hasła nie są takie same"
+            else null
+        }
+    }
+    val isFormValid by remember(emailError, passwordError, confirmPasswordError) {
+        derivedStateOf {
+            emailError == null && passwordError == null && confirmPasswordError == null && email.isNotBlank() && password.isNotBlank()
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -43,7 +72,8 @@ fun RegisterScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(32.dp),
+                .padding(32.dp)
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
@@ -90,10 +120,20 @@ fun RegisterScreen(
                             )
                         },
                         singleLine = true,
+                        isError = emailError != null,
+                        supportingText = { emailError?.let { Text(it, color = MaterialTheme.colorScheme.error) } },
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                            focusedBorderColor = if (emailError != null) {
+                                MaterialTheme.colorScheme.error
+                            } else {
+                                MaterialTheme.colorScheme.primary
+                            },
+                            unfocusedBorderColor = if (emailError != null) {
+                                MaterialTheme.colorScheme.error.copy(alpha = 0.5f)
+                            } else {
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                            }
                         )
                     )
 
@@ -112,10 +152,20 @@ fun RegisterScreen(
                         },
                         singleLine = true,
                         visualTransformation = PasswordVisualTransformation(),
+                        isError = passwordError != null,
+                        supportingText = { passwordError?.let { Text(it, color = MaterialTheme.colorScheme.error) } },
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = MaterialTheme.colorScheme.primary,
-                            unfocusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                            focusedBorderColor = if (passwordError != null) {
+                                MaterialTheme.colorScheme.error
+                            } else {
+                                MaterialTheme.colorScheme.primary
+                            },
+                            unfocusedBorderColor = if (passwordError != null) {
+                                MaterialTheme.colorScheme.error.copy(alpha = 0.5f)
+                            } else {
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                            }
                         )
                     )
 
@@ -134,31 +184,22 @@ fun RegisterScreen(
                         },
                         singleLine = true,
                         visualTransformation = PasswordVisualTransformation(),
+                        isError = confirmPasswordError != null,
+                        supportingText = { confirmPasswordError?.let { Text(it, color = MaterialTheme.colorScheme.error) } },
                         modifier = Modifier.fillMaxWidth(),
-                        isError = passwordError,
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = if (passwordError) {
+                            focusedBorderColor = if (confirmPasswordError != null) {
                                 MaterialTheme.colorScheme.error
                             } else {
                                 MaterialTheme.colorScheme.primary
                             },
-                            unfocusedBorderColor = if (passwordError) {
+                            unfocusedBorderColor = if (confirmPasswordError != null) {
                                 MaterialTheme.colorScheme.error.copy(alpha = 0.5f)
                             } else {
                                 MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
                             }
                         )
                     )
-
-                    if (passwordError) {
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "Hasła nie są takie same",
-                            color = MaterialTheme.colorScheme.error,
-                            fontSize = 12.sp,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
 
                     Spacer(modifier = Modifier.height(24.dp))
 
@@ -167,17 +208,17 @@ fun RegisterScreen(
                             color = MaterialTheme.colorScheme.primary
                         )
                         else -> Button(
-                            onClick = {
-                                passwordError = password != confirmPassword
-                                if (!passwordError) {
-                                    onRegister(email, password)
-                                }
-                            },
+                            onClick = { onRegister(email, password) },
+                            enabled = isFormValid && authState !is AuthState.Loading,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(50.dp),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primary
+                                containerColor = if (isFormValid) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                                }
                             )
                         ) {
                             Text(
