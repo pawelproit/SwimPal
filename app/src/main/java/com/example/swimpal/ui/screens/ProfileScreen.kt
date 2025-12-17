@@ -19,7 +19,6 @@ import com.example.swimpal.viewmodel.ProfileState
 import com.example.swimpal.viewmodel.UserProfileViewModel
 import com.example.swimpal.viewmodel.TrainingViewModel
 import com.example.swimpal.ui.components.*
-import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -30,10 +29,7 @@ fun ProfileScreen(
     onLogout: () -> Unit
 ) {
     val profileState by userProfileViewModel.profileState.collectAsState()
-    val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
 
-    var prevBadges by remember { mutableStateOf<List<com.example.swimpal.model.Badge>>(emptyList()) }
     var expandedData by remember { mutableStateOf(false) }
     var expandedBadges by remember { mutableStateOf(false) }
     var expandedVideo by remember { mutableStateOf(false) }
@@ -42,33 +38,11 @@ fun ProfileScreen(
     val historyTrainings by trainingViewModel.historyTrainings.collectAsState(initial = emptyList())
     val expandedHistoryTrainings = remember { mutableStateMapOf<String, Boolean>() }
 
-    var selectedVideoKey by remember { mutableStateOf<String?>(null) }
-
     LaunchedEffect(Unit) {
         userProfileViewModel.loadUserProfile()
     }
 
-    LaunchedEffect(profileState) {
-        if (profileState is ProfileState.Success) {
-            val profile = (profileState as ProfileState.Success).userProfile
-            val current = profile.badges
-            val newBadges = current.filterIndexed { i, badge ->
-                badge.achieved && (prevBadges.getOrNull(i)?.achieved == false)
-            }
-            prevBadges = current
-            if (newBadges.isNotEmpty()) {
-                val b = newBadges.first()
-                scope.launch {
-                    snackbarHostState.showSnackbar(
-                        "Gratulacje! Zdobyłeś odznakę: \"${b.name}\" - ${b.description}"
-                    )
-                }
-            }
-        }
-    }
-
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         modifier = Modifier.fillMaxSize()
     ) { innerPadding ->
         Box(
@@ -135,7 +109,7 @@ fun ProfileScreen(
                                     )
                                 }
                                 is ProfileState.Error -> Text(
-                                    "Błąd: ${(profileState as ProfileState.Error).error}",
+                                    "Bąd: ${(profileState as ProfileState.Error).error}",
                                     color = MaterialTheme.colorScheme.error
                                 )
                                 else -> Text("Brak danych profilu.")
@@ -217,7 +191,6 @@ fun ProfileScreen(
                         }
                     }
 
-
                     item {
                         ExpandableCard(
                             title = "📜 Historia treningów",
@@ -251,6 +224,7 @@ fun ProfileScreen(
         }
     }
 }
+
 @Composable
 private fun VideoSection() {
     val baseUrl = "https://pawelproit.github.io/swimpal-videos/videos"
@@ -286,7 +260,7 @@ private fun VideoSection() {
             VideoItem("grzbiet_dokladanka_deska_dol", "Dokładanka do grzbietu z deską na dole", "$baseUrl/grzbiet/dokladankaGrzbietDeskaNaDole.mp4"),
             VideoItem("grzbiet_dokladanka_deska_gora", "Dokładanka do grzbietu z deską u góry", "$baseUrl/grzbiet/dokladankaGrzbietDeskaUGory.mp4"),
             VideoItem("grzbiet_rece", "Ręce grzbiet", "$baseUrl/grzbiet/Kopia ramiona_grzbiet.mp4"),
-            VideoItem("grzbiet_pelny_piaty_sty;", "Grzbiet i 5 styl", "$baseUrl/grzbiet/pelnyGrzbiet5Styl.mp4")
+            VideoItem("grzbiet_pelny_piaty_sty", "Grzbiet i 5 styl", "$baseUrl/grzbiet/pelnyGrzbiet5Styl.mp4")
         ),
         "Delfin" to listOf(
             VideoItem("delfin_pelny", "Delfin pełny", "$baseUrl/delfin/pelnyDelfin.mp4"),
@@ -423,7 +397,6 @@ private fun VideoSection() {
         }
     }
 }
-
 
 @Composable
 private fun TrainingHistorySection(
