@@ -29,6 +29,9 @@ fun LoginScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
+    var emailTouched by remember { mutableStateOf(false) }
+    var passwordTouched by remember { mutableStateOf(false) }
+
     val emailError by remember(email) {
         derivedStateOf {
             if (email.isBlank()) "Email nie może być pusty"
@@ -43,9 +46,14 @@ fun LoginScreen(
             else null
         }
     }
-    val isFormValid by remember(emailError, passwordError) {
+
+    val showEmailError = emailTouched && emailError != null
+    val showPasswordError = passwordTouched && passwordError != null
+
+    val isFormValid by remember(emailError, passwordError, email, password) {
         derivedStateOf {
-            emailError == null && passwordError == null && email.isNotBlank() && password.isNotBlank()
+            emailError == null && passwordError == null &&
+                    email.isNotBlank() && password.isNotBlank()
         }
     }
 
@@ -102,7 +110,10 @@ fun LoginScreen(
                 ) {
                     OutlinedTextField(
                         value = email,
-                        onValueChange = { email = it },
+                        onValueChange = {
+                            email = it
+                            if (!emailTouched) emailTouched = true
+                        },
                         label = { Text("Email") },
                         leadingIcon = {
                             Icon(
@@ -112,16 +123,23 @@ fun LoginScreen(
                             )
                         },
                         singleLine = true,
-                        isError = emailError != null,
-                        supportingText = { emailError?.let { Text(it, color = MaterialTheme.colorScheme.error) } },
+                        isError = showEmailError,
+                        supportingText = {
+                            if (showEmailError) {
+                                Text(
+                                    emailError ?: "",
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        },
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = if (emailError != null) {
+                            focusedBorderColor = if (showEmailError) {
                                 MaterialTheme.colorScheme.error
                             } else {
                                 MaterialTheme.colorScheme.primary
                             },
-                            unfocusedBorderColor = if (emailError != null) {
+                            unfocusedBorderColor = if (showEmailError) {
                                 MaterialTheme.colorScheme.error.copy(alpha = 0.5f)
                             } else {
                                 MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
@@ -133,7 +151,10 @@ fun LoginScreen(
 
                     OutlinedTextField(
                         value = password,
-                        onValueChange = { password = it },
+                        onValueChange = {
+                            password = it
+                            if (!passwordTouched) passwordTouched = true
+                        },
                         label = { Text("Hasło") },
                         leadingIcon = {
                             Icon(
@@ -144,16 +165,23 @@ fun LoginScreen(
                         },
                         singleLine = true,
                         visualTransformation = PasswordVisualTransformation(),
-                        isError = passwordError != null,
-                        supportingText = { passwordError?.let { Text(it, color = MaterialTheme.colorScheme.error) } },
+                        isError = showPasswordError,
+                        supportingText = {
+                            if (showPasswordError) {
+                                Text(
+                                    passwordError ?: "",
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        },
                         modifier = Modifier.fillMaxWidth(),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = if (passwordError != null) {
+                            focusedBorderColor = if (showPasswordError) {
                                 MaterialTheme.colorScheme.error
                             } else {
                                 MaterialTheme.colorScheme.primary
                             },
-                            unfocusedBorderColor = if (passwordError != null) {
+                            unfocusedBorderColor = if (showPasswordError) {
                                 MaterialTheme.colorScheme.error.copy(alpha = 0.5f)
                             } else {
                                 MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
@@ -167,9 +195,16 @@ fun LoginScreen(
                         is AuthState.Loading -> CircularProgressIndicator(
                             color = MaterialTheme.colorScheme.primary
                         )
+
                         else -> Button(
-                            onClick = { onLogin(email, password) },
-                            enabled = isFormValid && authState !is AuthState.Loading,
+                            onClick = {
+                                emailTouched = true
+                                passwordTouched = true
+                                if (isFormValid) {
+                                    onLogin(email, password)
+                                }
+                            },
+                            enabled = authState !is AuthState.Loading,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(50.dp),
