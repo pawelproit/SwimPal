@@ -16,7 +16,7 @@ import com.example.swimpal.ui.screens.generateScreen.GeneratedTrainingScreen
 import com.example.swimpal.ui.screens.generateScreen.CustomTrainingScreen
 
 @Composable
-fun GenerateScreen(subroute: String? = null) { // DODANE: parametr subroute
+fun GenerateScreen(subroute: String? = null) {
     val navController = rememberNavController()
 
     val tabs = listOf(
@@ -27,11 +27,10 @@ fun GenerateScreen(subroute: String? = null) { // DODANE: parametr subroute
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStackEntry?.destination?.route
 
-    // DODANE: automatyczne przełączanie na podstawie subroute
     LaunchedEffect(subroute) {
         val targetRoute = when (subroute) {
             "custom" -> "generate/custom"
-            else -> "generate/generated" // domyślnie generated
+            else -> "generate/generated"
         }
         if (currentRoute != targetRoute) {
             navController.navigate(targetRoute) {

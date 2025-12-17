@@ -140,7 +140,7 @@ class UserProfileViewModel : ViewModel() {
     }
 
     fun markBadgeAsSeen(badgeName: String) {
-        _badgeState.value = BadgeState() // Reset dialogu
+        _badgeState.value = BadgeState()
         val userId = auth.currentUser?.uid ?: return
         val db = FirebaseFirestore.getInstance()
         val userRef = db.collection("users").document(userId)

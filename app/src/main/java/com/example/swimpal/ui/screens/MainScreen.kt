@@ -30,7 +30,7 @@ import android.content.Context
 @Composable
 fun MainScreen(
     userProfileViewModel: UserProfileViewModel = viewModel(),
-    onNavigateToGenerate: (String?) -> Unit = { _ -> }, // ZMIENIONE: przyjmuje String?
+    onNavigateToGenerate: (String?) -> Unit = { _ -> },
     onNavigateToTraining: () -> Unit = {},
     onNavigateToHistory: () -> Unit = {}
 ) {
@@ -124,7 +124,7 @@ fun MainScreen(
             val profile = (profileState as ProfileState.Success).userProfile
             MainScreenContent(
                 profile = profile,
-                onNavigateToGenerate = onNavigateToGenerate, // Przekazane dalej
+                onNavigateToGenerate = onNavigateToGenerate,
                 onNavigateToTraining = onNavigateToTraining,
                 onNavigateToHistory = onNavigateToHistory
             )
@@ -164,7 +164,7 @@ fun MainScreen(
 @Composable
 fun MainScreenContent(
     profile: com.example.swimpal.model.UserProfile,
-    onNavigateToGenerate: (String?) -> Unit, // ZMIENIONE: przyjmuje String?
+    onNavigateToGenerate: (String?) -> Unit,
     onNavigateToTraining: () -> Unit,
     onNavigateToHistory: () -> Unit
 ) {
@@ -199,7 +199,7 @@ fun MainScreenContent(
             Spacer(modifier = Modifier.height(24.dp))
 
             QuickActionsSection(
-                onGenerateClick = onNavigateToGenerate, // Przekazane dalej
+                onGenerateClick = onNavigateToGenerate,
                 onTrainingsClick = onNavigateToTraining,
                 onHistoryClick = onNavigateToHistory
             )
@@ -291,7 +291,7 @@ fun StatItem(icon: String, value: String, label: String) {
 
 @Composable
 fun QuickActionsSection(
-    onGenerateClick: (String?) -> Unit, // ZMIENIONE: przyjmuje String?
+    onGenerateClick: (String?) -> Unit,
     onTrainingsClick: () -> Unit,
     onHistoryClick: () -> Unit
 ) {
@@ -311,7 +311,7 @@ fun QuickActionsSection(
                 modifier = Modifier.weight(1f),
                 icon = Icons.Default.Add,
                 label = "Generuj\nTrening",
-                onClick = { onGenerateClick(null) } // null = generated (domyślnie)
+                onClick = { onGenerateClick(null) }
             )
             QuickActionButton(
                 modifier = Modifier.weight(1f),
@@ -329,7 +329,7 @@ fun QuickActionsSection(
                 modifier = Modifier.weight(1f),
                 icon = Icons.Default.Create,
                 label = "Napisz\nTrening",
-                onClick = { onGenerateClick("custom") } // "custom" = sekcja Napisz
+                onClick = { onGenerateClick("custom") }
             )
             QuickActionButton(
                 modifier = Modifier.weight(1f),
