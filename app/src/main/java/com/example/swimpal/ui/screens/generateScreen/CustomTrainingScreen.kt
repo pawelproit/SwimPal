@@ -5,9 +5,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.Alignment
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.swimpal.model.TrainingTask
 import com.example.swimpal.model.TrainingDay
@@ -25,29 +25,12 @@ fun CustomTrainingScreen(
 ) {
     var trainingName by remember { mutableStateOf("") }
     var days by remember {
-        mutableStateOf(
-            listOf(
-                TrainingDayInput("Dzień 1", listOf(TrainingTaskInput("", "")))
-            )
-        )
+        mutableStateOf(listOf(TrainingDayInput("Dzień 1", listOf(TrainingTaskInput("", "")))))
     }
     var errorMsg by remember { mutableStateOf("") }
     var infoMsg by remember { mutableStateOf("") }
 
-    var showBadgeDialog by remember { mutableStateOf(false) }
-    var newBadge by remember { mutableStateOf<Pair<String, String>?>(null) }
-    val profileState by userProfileViewModel.profileState.collectAsState()
-
-    LaunchedEffect(profileState) {
-        if (profileState is ProfileState.Success) {
-            val profile = (profileState as ProfileState.Success).userProfile
-            val newlyAchievedBadge = profile.badges.firstOrNull { it.achieved && it.isNew }
-            if (newlyAchievedBadge != null) {
-                newBadge = newlyAchievedBadge.name to newlyAchievedBadge.description
-                showBadgeDialog = true
-            }
-        }
-    }
+    val badgeState by userProfileViewModel.badgeState
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -67,9 +50,7 @@ fun CustomTrainingScreen(
             Spacer(modifier = Modifier.height(20.dp))
 
             days.forEachIndexed { dayIdx, dayInput ->
-                Card(
-                    modifier = Modifier.padding(vertical = 8.dp)
-                ) {
+                Card(modifier = Modifier.padding(vertical = 8.dp)) {
                     Column(modifier = Modifier.padding(12.dp)) {
                         OutlinedTextField(
                             value = dayInput.dayName,
@@ -110,12 +91,10 @@ fun CustomTrainingScreen(
                                     }
                                 },
                                 label = { Text("Opis zadania ${taskIdx + 1}") },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(bottom = 8.dp)
+                                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
                             )
-                            Row {
-                                if (dayInput.tasks.size > 1) {
+                            if (dayInput.tasks.size > 1) {
+                                Row {
                                     TextButton(onClick = {
                                         days = days.toMutableList().apply {
                                             this[dayIdx] = this[dayIdx].copy(
@@ -166,7 +145,6 @@ fun CustomTrainingScreen(
                     modifier = Modifier.padding(top = 8.dp)
                 )
             }
-
             if (errorMsg.isNotEmpty()) {
                 Text(
                     errorMsg,
@@ -174,7 +152,6 @@ fun CustomTrainingScreen(
                     modifier = Modifier.padding(top = 8.dp)
                 )
             }
-
             Spacer(modifier = Modifier.height(76.dp))
         }
 
@@ -182,21 +159,16 @@ fun CustomTrainingScreen(
             onClick = {
                 errorMsg = ""
                 infoMsg = ""
-
-                if (trainingName.isBlank() ||
-                    days.any { it.dayName.isBlank() || it.tasks.any { t -> t.name.isBlank() || t.description.isBlank() } }
-                ) {
+                if (trainingName.isBlank() || days.any {
+                        it.dayName.isBlank() || it.tasks.any { t -> t.name.isBlank() || t.description.isBlank() }
+                    }) {
                     errorMsg = "Wszystkie pola muszą być wypełnione"
                 } else {
                     val daysModel = days.map { dayInput ->
                         TrainingDay(
                             dayName = dayInput.dayName,
                             tasks = dayInput.tasks.mapIndexed { idx, t ->
-                                TrainingTask(
-                                    name = t.name,
-                                    description = t.description,
-                                    order = idx + 1
-                                )
+                                TrainingTask(name = t.name, description = t.description, order = idx + 1)
                             }
                         )
                     }
@@ -205,19 +177,12 @@ fun CustomTrainingScreen(
                         daysModel,
                         onSuccess = {
                             infoMsg = "Stworzono i zapisano trening!"
-
                             trainingName = ""
-                            days = listOf(
-                                TrainingDayInput("Dzień 1", listOf(TrainingTaskInput("", "")))
-                            )
-
+                            days = listOf(TrainingDayInput("Dzień 1", listOf(TrainingTaskInput("", ""))))
                             userProfileViewModel.loadUserProfile()
-
                             onTrainingSaved()
                         },
-                        onError = {
-                            errorMsg = it.message ?: "Błąd zapisu"
-                        }
+                        onError = { errorMsg = it.message ?: "Błąd zapisu" }
                     )
                 }
             },
@@ -230,24 +195,16 @@ fun CustomTrainingScreen(
         }
     }
 
-    if (showBadgeDialog && newBadge != null) {
+    if (badgeState.showDialog) {
         AlertDialog(
-            onDismissRequest = {
-                showBadgeDialog = false
-                userProfileViewModel.markBadgeAsSeen(newBadge!!.first)
-            },
+            onDismissRequest = { userProfileViewModel.markBadgeAsSeen(badgeState.badgeName) },
             confirmButton = {
-                Button(
-                    onClick = {
-                        showBadgeDialog = false
-                        userProfileViewModel.markBadgeAsSeen(newBadge!!.first)
-                    }
-                ) {
+                Button(onClick = { userProfileViewModel.markBadgeAsSeen(badgeState.badgeName) }) {
                     Text("OK")
                 }
             },
             title = { Text("🎉 Gratulacje!") },
-            text = { Text("Zdobywasz nową odznakę:\n\n${newBadge!!.first}\n${newBadge!!.second}") }
+            text = { Text("Zdobywasz nową odznakę:\n\n${badgeState.badgeName}\n${badgeState.badgeDescription}") }
         )
     }
 }

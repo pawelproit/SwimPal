@@ -12,7 +12,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.swimpal.viewmodel.TrainingViewModel
 import com.example.swimpal.viewmodel.UserProfileViewModel
-import com.example.swimpal.viewmodel.ProfileState
 
 @Composable
 fun GeneratedTrainingScreen(
@@ -26,22 +25,7 @@ fun GeneratedTrainingScreen(
     var infoMsg by remember { mutableStateOf("") }
 
     val trainingTypes = listOf("Sprinty", "Triathlon", "Open Water", "Technika")
-
-    var showBadgeDialog by remember { mutableStateOf(false) }
-    var newBadge by remember { mutableStateOf<Pair<String, String>?>(null) }
-    val profileState by userProfileViewModel.profileState.collectAsState()
-
-    LaunchedEffect(profileState) {
-        if (profileState is ProfileState.Success) {
-            val profile = (profileState as ProfileState.Success).userProfile
-            val newlyAchievedBadge = profile.badges.firstOrNull { it.achieved && it.isNew }
-
-            if (newlyAchievedBadge != null) {
-                newBadge = newlyAchievedBadge.name to newlyAchievedBadge.description
-                showBadgeDialog = true
-            }
-        }
-    }
+    val badgeState by userProfileViewModel.badgeState
 
     Column(
         modifier = Modifier
@@ -61,54 +45,30 @@ fun GeneratedTrainingScreen(
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.secondary
         )
-
         Spacer(modifier = Modifier.height(24.dp))
 
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-        ) {
+        Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = "🏊 Typ treningu",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                Text("🏊 Typ treningu", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(12.dp))
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         trainingTypes.take(2).forEach { type ->
                             FilterChip(
                                 selected = selectedType == type,
                                 onClick = { selectedType = type },
                                 label = { Text(type) },
-                                modifier = Modifier.weight(1f),
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = MaterialTheme.colorScheme.primary,
-                                    selectedLabelColor = Color.White
-                                )
+                                modifier = Modifier.weight(1f)
                             )
                         }
                     }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         trainingTypes.drop(2).forEach { type ->
                             FilterChip(
                                 selected = selectedType == type,
                                 onClick = { selectedType = type },
                                 label = { Text(type) },
-                                modifier = Modifier.weight(1f),
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = MaterialTheme.colorScheme.primary,
-                                    selectedLabelColor = Color.White
-                                )
+                                modifier = Modifier.weight(1f)
                             )
                         }
                     }
@@ -117,103 +77,47 @@ fun GeneratedTrainingScreen(
         }
 
         Spacer(modifier = Modifier.height(16.dp))
-
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-        ) {
+        Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = "💪 Poziom trudności",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                Text("💪 Poziom trudności", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(8.dp))
                 Slider(
                     value = selectedDifficulty.toFloat(),
                     onValueChange = { selectedDifficulty = it.toInt() },
                     valueRange = 1f..3f,
-                    steps = 1,
-                    colors = SliderDefaults.colors(
-                        thumbColor = MaterialTheme.colorScheme.primary,
-                        activeTrackColor = MaterialTheme.colorScheme.primary
-                    )
+                    steps = 1
                 )
-                Text(
-                    text = "Poziom: $selectedDifficulty ${when(selectedDifficulty) { 1 -> "⭐" 2 -> "⭐⭐" else -> "⭐⭐⭐" }}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Text("Poziom: $selectedDifficulty ${when(selectedDifficulty) { 1 -> "⭐" 2 -> "⭐⭐" else -> "⭐⭐⭐" }}")
             }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
-
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-        ) {
+        Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text(
-                    text = "📅 Ilość dni treningowych",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                Text("📅 Ilość dni treningowych", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(8.dp))
                 Slider(
                     value = selectedDays.toFloat(),
                     onValueChange = { selectedDays = it.toInt() },
                     valueRange = 1f..6f,
-                    steps = 4,
-                    colors = SliderDefaults.colors(
-                        thumbColor = MaterialTheme.colorScheme.primary,
-                        activeTrackColor = MaterialTheme.colorScheme.primary
-                    )
+                    steps = 4
                 )
-                Text(
-                    text = "Wybrano: $selectedDays dni",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Text("Wybrano: $selectedDays dni")
             }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
         if (infoMsg.isNotEmpty()) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
-            ) {
-                Text(
-                    text = infoMsg,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(16.dp)
-                )
+            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
+                Text(infoMsg, modifier = Modifier.padding(16.dp))
             }
             Spacer(modifier = Modifier.height(16.dp))
         }
 
         if (errorMsg.isNotEmpty()) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.errorContainer
-                )
-            ) {
-                Text(
-                    text = errorMsg,
-                    color = MaterialTheme.colorScheme.onErrorContainer,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(16.dp)
-                )
+            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)) {
+                Text(errorMsg, modifier = Modifier.padding(16.dp))
             }
             Spacer(modifier = Modifier.height(16.dp))
         }
@@ -233,44 +137,23 @@ fun GeneratedTrainingScreen(
                     onError = { errorMsg = it.message ?: "Błąd zapisu treningu" }
                 )
             },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary
-            )
+            modifier = Modifier.fillMaxWidth().height(56.dp)
         ) {
-            Text(
-                text = "🚀 Generuj trening",
-                fontWeight = FontWeight.Bold
-            )
+            Text("🚀 Generuj trening", fontWeight = FontWeight.Bold)
         }
-
         Spacer(modifier = Modifier.height(24.dp))
     }
 
-    if (showBadgeDialog && newBadge != null) {
+    if (badgeState.showDialog) {
         AlertDialog(
-            onDismissRequest = {
-                showBadgeDialog = false
-                userProfileViewModel.markBadgeAsSeen(newBadge!!.first)
-            },
+            onDismissRequest = { userProfileViewModel.markBadgeAsSeen(badgeState.badgeName) },
             confirmButton = {
-                Button(
-                    onClick = {
-                        showBadgeDialog = false
-                        userProfileViewModel.markBadgeAsSeen(newBadge!!.first)
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary
-                    )
-                ) {
+                Button(onClick = { userProfileViewModel.markBadgeAsSeen(badgeState.badgeName) }) {
                     Text("OK")
                 }
             },
             title = { Text("🎉 Gratulacje!") },
-            text = { Text("Zdobywasz nową odznakę:\n\n${newBadge!!.first}\n${newBadge!!.second}") },
-            containerColor = Color.White
+            text = { Text("Zdobywasz nową odznakę:\n\n${badgeState.badgeName}\n${badgeState.badgeDescription}") }
         )
     }
 }
