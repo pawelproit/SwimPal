@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -29,7 +30,7 @@ import android.content.Context
 @Composable
 fun MainScreen(
     userProfileViewModel: UserProfileViewModel = viewModel(),
-    onNavigateToGenerate: () -> Unit = {},
+    onNavigateToGenerate: (String?) -> Unit = { _ -> }, // ZMIENIONE: przyjmuje String?
     onNavigateToTraining: () -> Unit = {},
     onNavigateToHistory: () -> Unit = {}
 ) {
@@ -123,7 +124,7 @@ fun MainScreen(
             val profile = (profileState as ProfileState.Success).userProfile
             MainScreenContent(
                 profile = profile,
-                onNavigateToGenerate = onNavigateToGenerate,
+                onNavigateToGenerate = onNavigateToGenerate, // Przekazane dalej
                 onNavigateToTraining = onNavigateToTraining,
                 onNavigateToHistory = onNavigateToHistory
             )
@@ -163,7 +164,7 @@ fun MainScreen(
 @Composable
 fun MainScreenContent(
     profile: com.example.swimpal.model.UserProfile,
-    onNavigateToGenerate: () -> Unit,
+    onNavigateToGenerate: (String?) -> Unit, // ZMIENIONE: przyjmuje String?
     onNavigateToTraining: () -> Unit,
     onNavigateToHistory: () -> Unit
 ) {
@@ -173,8 +174,8 @@ fun MainScreenContent(
             .background(
                 Brush.verticalGradient(
                     colors = listOf(
-                        Color(0xFFE1F5FE), // Bardzo jasny błękit na górze
-                        Color(0xFFF0F8FF)  // Alice blue na dole
+                        Color(0xFFE1F5FE),
+                        Color(0xFFF0F8FF)
                     )
                 )
             )
@@ -198,7 +199,7 @@ fun MainScreenContent(
             Spacer(modifier = Modifier.height(24.dp))
 
             QuickActionsSection(
-                onGenerateClick = onNavigateToGenerate,
+                onGenerateClick = onNavigateToGenerate, // Przekazane dalej
                 onTrainingsClick = onNavigateToTraining,
                 onHistoryClick = onNavigateToHistory
             )
@@ -290,7 +291,7 @@ fun StatItem(icon: String, value: String, label: String) {
 
 @Composable
 fun QuickActionsSection(
-    onGenerateClick: () -> Unit,
+    onGenerateClick: (String?) -> Unit, // ZMIENIONE: przyjmuje String?
     onTrainingsClick: () -> Unit,
     onHistoryClick: () -> Unit
 ) {
@@ -310,7 +311,7 @@ fun QuickActionsSection(
                 modifier = Modifier.weight(1f),
                 icon = Icons.Default.Add,
                 label = "Generuj\nTrening",
-                onClick = onGenerateClick
+                onClick = { onGenerateClick(null) } // null = generated (domyślnie)
             )
             QuickActionButton(
                 modifier = Modifier.weight(1f),
@@ -328,7 +329,7 @@ fun QuickActionsSection(
                 modifier = Modifier.weight(1f),
                 icon = Icons.Default.Create,
                 label = "Napisz\nTrening",
-                onClick = onGenerateClick
+                onClick = { onGenerateClick("custom") } // "custom" = sekcja Napisz
             )
             QuickActionButton(
                 modifier = Modifier.weight(1f),
@@ -373,7 +374,7 @@ fun QuickActionButton(
                 text = label,
                 style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.Medium,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurface
             )
         }

@@ -1,15 +1,18 @@
 package com.example.swimpal.ui.navigation
 
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.navigation.compose.*
 import androidx.compose.ui.res.stringResource
-import androidx.compose.foundation.layout.padding
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import com.example.swimpal.ui.screens.MainScreen
 import com.example.swimpal.ui.screens.ProfileScreen
 import com.example.swimpal.ui.screens.TrainingScreen
-import com.example.swimpal.ui.screens.MainScreen
 import com.example.swimpal.ui.screens.GenerateScreen
 
 @Composable
@@ -58,8 +61,9 @@ fun MainScreenWithBottomNav(
         ) {
             composable("main") {
                 MainScreen(
-                    onNavigateToGenerate = {
-                        navController.navigate("generate") {
+                    onNavigateToGenerate = { route ->
+                        val generateRoute = if (route == "custom") "generate/custom" else "generate"
+                        navController.navigate(generateRoute) {
                             popUpTo(navController.graph.findStartDestination().id) {
                                 saveState = true
                             }
@@ -84,11 +88,17 @@ fun MainScreenWithBottomNav(
                     }
                 )
             }
+
+            composable("generate") {
+                GenerateScreen(null)
+            }
+
+            composable("generate/custom") {
+                GenerateScreen("custom")
+            }
+
             composable("training") {
                 TrainingScreen()
-            }
-            composable("generate") {
-                GenerateScreen()
             }
             composable("profile") {
                 ProfileScreen(onLogout = onLogout)

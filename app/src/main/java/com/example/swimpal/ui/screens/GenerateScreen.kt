@@ -1,13 +1,9 @@
 package com.example.swimpal.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -20,7 +16,7 @@ import com.example.swimpal.ui.screens.generateScreen.GeneratedTrainingScreen
 import com.example.swimpal.ui.screens.generateScreen.CustomTrainingScreen
 
 @Composable
-fun GenerateScreen() {
+fun GenerateScreen(subroute: String? = null) { // DODANE: parametr subroute
     val navController = rememberNavController()
 
     val tabs = listOf(
@@ -30,6 +26,21 @@ fun GenerateScreen() {
 
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStackEntry?.destination?.route
+
+    // DODANE: automatyczne przełączanie na podstawie subroute
+    LaunchedEffect(subroute) {
+        val targetRoute = when (subroute) {
+            "custom" -> "generate/custom"
+            else -> "generate/generated" // domyślnie generated
+        }
+        if (currentRoute != targetRoute) {
+            navController.navigate(targetRoute) {
+                popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                launchSingleTop = true
+                restoreState = true
+            }
+        }
+    }
 
     Box(
         modifier = Modifier
