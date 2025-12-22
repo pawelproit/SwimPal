@@ -4,11 +4,15 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.example.swimpal.model.UserProfile
-import com.example.swimpal.model.Badge
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import com.example.swimpal.model.Badge
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+
 
 sealed class ProfileState {
     object Idle : ProfileState()
@@ -79,11 +83,25 @@ class UserProfileViewModel : ViewModel() {
             profile.activeDays
         )
 
-        val oldBadges = profile.badges.associateBy { it.name }
+        val oldBadgesByName = profile.badges.associateBy { it.name }
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+        val now = dateFormat.format(Date())
+
         val freshBadges = baseBadges.map { newBadge ->
-            val old = oldBadges[newBadge.name]
+            val old = oldBadgesByName[newBadge.name]
             val justAchieved = (old == null || !old.achieved) && newBadge.achieved
-            newBadge.copy(isNew = justAchieved)
+
+            if (justAchieved) {
+                newBadge.copy(
+                    isNew = true,
+                    achievedDate = now
+                )
+            } else {
+                newBadge.copy(
+                    isNew = old?.isNew ?: false,
+                    achievedDate = old?.achievedDate
+                )
+            }
         }
 
         val newlyAchievedBadge = freshBadges.firstOrNull { it.achieved && it.isNew }
@@ -100,6 +118,7 @@ class UserProfileViewModel : ViewModel() {
             firestore.collection("users").document(uid).update("badges", freshBadges)
         }
     }
+
 
     fun saveUserProfile(userProfile: UserProfile) {
         val uid = currentUid ?: return

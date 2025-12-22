@@ -421,7 +421,12 @@ fun WeeklyGoalCard(completedTrainings: Int, goalTrainings: Int) {
 
 @Composable
 fun AchievementsSection(badges: List<com.example.swimpal.model.Badge>) {
-    if (badges.isEmpty()) return
+    val lastThree = badges
+        .filter { it.achieved && it.achievedDate != null }
+        .sortedByDescending { it.achievedDate }
+        .take(3)
+
+    if (lastThree.isEmpty()) return
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -440,7 +445,8 @@ fun AchievementsSection(badges: List<com.example.swimpal.model.Badge>) {
                 color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(modifier = Modifier.height(12.dp))
-            badges.take(3).forEach { badge ->
+
+            lastThree.forEach { badge ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
