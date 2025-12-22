@@ -329,8 +329,11 @@ fun QuickActionsSection(
                 modifier = Modifier.weight(1f),
                 icon = Icons.Default.Create,
                 label = "Napisz\nTrening",
-                onClick = { onGenerateClick("custom") }
+                onClick = {
+                    onGenerateClick("custom")
+                }
             )
+
             QuickActionButton(
                 modifier = Modifier.weight(1f),
                 icon = Icons.Default.DateRange,

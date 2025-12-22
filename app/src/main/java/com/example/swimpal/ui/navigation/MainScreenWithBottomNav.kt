@@ -6,20 +6,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavGraph.Companion.findStartDestination
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
-import com.example.swimpal.ui.screens.MainScreen
-import com.example.swimpal.ui.screens.ProfileScreen
-import com.example.swimpal.ui.screens.TrainingScreen
-import com.example.swimpal.ui.screens.GenerateScreen
+import androidx.navigation.compose.*
+import com.example.swimpal.ui.screens.*
 
 @Composable
 fun MainScreenWithBottomNav(
     onLogout: () -> Unit
 ) {
     val navController = rememberNavController()
+
     val items = listOf(
         BottomNavItem.Main,
         BottomNavItem.Generate,
@@ -36,10 +31,17 @@ fun MainScreenWithBottomNav(
                 items.forEach { item ->
                     NavigationBarItem(
                         icon = { Icon(item.icon, contentDescription = null) },
-                        label = { Text(stringResource(id = item.titleRes)) },
-                        selected = currentRoute == item.route,
+                        label = { Text(stringResource(item.titleRes)) },
+                        selected = currentRoute == item.route ||
+                                (item.route == "generate" && currentRoute?.startsWith("generate") == true),
                         onClick = {
-                            if (currentRoute != item.route) {
+                            if (item.route == "main" || item.route == "generate") {
+                                navController.navigate(item.route) {
+                                    popUpTo(navController.graph.findStartDestination().id)
+                                    launchSingleTop = true
+                                    restoreState = false
+                                }
+                            } else if (currentRoute != item.route) {
                                 navController.navigate(item.route) {
                                     popUpTo(navController.graph.findStartDestination().id) {
                                         saveState = true
@@ -59,47 +61,38 @@ fun MainScreenWithBottomNav(
             startDestination = "main",
             modifier = Modifier.padding(paddingValues)
         ) {
+
             composable("main") {
                 MainScreen(
-                    onNavigateToGenerate = { route ->
-                        val generateRoute = if (route == "custom") "generate/custom" else "generate"
-                        navController.navigate(generateRoute) {
-                            popUpTo(navController.graph.findStartDestination().id) {
-                                saveState = true
-                            }
-                            restoreState = true
+                    onNavigateToGenerate = { sub ->
+                        navController.navigate(
+                            if (sub == "custom") "generate/custom" else "generate"
+                        ) {
+                            launchSingleTop = true
+                            restoreState = false
                         }
                     },
                     onNavigateToTraining = {
-                        navController.navigate("training") {
-                            popUpTo(navController.graph.findStartDestination().id) {
-                                saveState = true
-                            }
-                            restoreState = true
-                        }
+                        navController.navigate("training")
                     },
                     onNavigateToHistory = {
-                        navController.navigate("profile") {
-                            popUpTo(navController.graph.findStartDestination().id) {
-                                saveState = true
-                            }
-                            restoreState = true
-                        }
+                        navController.navigate("profile")
                     }
                 )
             }
 
             composable("generate") {
-                GenerateScreen(null)
+                GenerateScreen()
             }
 
             composable("generate/custom") {
-                GenerateScreen("custom")
+                GenerateScreen(startTab = "custom")
             }
 
             composable("training") {
                 TrainingScreen()
             }
+
             composable("profile") {
                 ProfileScreen(onLogout = onLogout)
             }

@@ -8,83 +8,64 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
-import com.example.swimpal.ui.screens.generateScreen.GeneratedTrainingScreen
-import com.example.swimpal.ui.screens.generateScreen.CustomTrainingScreen
+import androidx.navigation.compose.*
+import com.example.swimpal.ui.screens.generateScreen.*
 
 @Composable
-fun GenerateScreen(subroute: String? = null) {
+fun GenerateScreen(startTab: String? = null) {
+
     val navController = rememberNavController()
+
+    val startDestination =
+        if (startTab == "custom") "generate/custom"
+        else "generate/generated"
 
     val tabs = listOf(
         "generate/generated" to "🤖 Generuj",
         "generate/custom" to "✍️ Napisz"
     )
 
-    val currentBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = currentBackStackEntry?.destination?.route
-
-    LaunchedEffect(subroute) {
-        val targetRoute = when (subroute) {
-            "custom" -> "generate/custom"
-            else -> "generate/generated"
-        }
-        if (currentRoute != targetRoute) {
-            navController.navigate(targetRoute) {
-                popUpTo(navController.graph.startDestinationId) { inclusive = true }
-                launchSingleTop = true
-                restoreState = true
-            }
-        }
-    }
+    val currentRoute =
+        navController.currentBackStackEntryAsState().value?.destination?.route
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFFE1F5FE),
-                        Color(0xFFF0F8FF)
-                    )
+                    listOf(Color(0xFFE1F5FE), Color(0xFFF0F8FF))
                 )
             )
     ) {
         Column {
+
             TabRow(
-                selectedTabIndex = tabs.indexOfFirst { it.first == currentRoute }.coerceAtLeast(0),
-                containerColor = Color.White,
-                contentColor = MaterialTheme.colorScheme.primary
+                selectedTabIndex = tabs.indexOfFirst { it.first == currentRoute }
+                    .coerceAtLeast(0)
             ) {
-                tabs.forEachIndexed { index, pair ->
+                tabs.forEach { (route, label) ->
                     Tab(
-                        selected = currentRoute == pair.first,
+                        selected = currentRoute == route,
                         onClick = {
-                            navController.navigate(pair.first) {
+                            navController.navigate(route) {
                                 launchSingleTop = true
-                                restoreState = true
-                                popUpTo(navController.graph.startDestinationId) {
-                                    saveState = true
-                                }
                             }
                         },
-                        text = { Text(pair.second) },
-                        selectedContentColor = MaterialTheme.colorScheme.primary,
-                        unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        text = { Text(label) }
                     )
                 }
             }
 
             NavHost(
                 navController = navController,
-                startDestination = "generate/generated",
-                modifier = Modifier.padding(0.dp)
+                startDestination = startDestination
             ) {
-                composable("generate/generated") { GeneratedTrainingScreen() }
-                composable("generate/custom") { CustomTrainingScreen() }
+                composable("generate/generated") {
+                    GeneratedTrainingScreen()
+                }
+                composable("generate/custom") {
+                    CustomTrainingScreen()
+                }
             }
         }
     }
