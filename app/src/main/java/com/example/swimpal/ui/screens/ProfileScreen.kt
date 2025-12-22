@@ -5,16 +5,24 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.swimpal.model.Training
+import com.example.swimpal.model.UserProfile
 import com.example.swimpal.viewmodel.ProfileState
 import com.example.swimpal.viewmodel.UserProfileViewModel
 import com.example.swimpal.viewmodel.TrainingViewModel
@@ -22,6 +30,7 @@ import com.example.swimpal.ui.components.*
 import java.text.SimpleDateFormat
 import java.util.*
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     userProfileViewModel: UserProfileViewModel = viewModel(),
@@ -73,15 +82,15 @@ fun ProfileScreen(
                     item {
                         Text(
                             text = "👤 Twój profil",
-                            style = MaterialTheme.typography.headlineMedium,
+                            fontSize = 28.sp,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onBackground
+                            color = Color(0xFF1565C0)
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = "Zarządzaj swoim kontem",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.secondary
+                            fontSize = 16.sp,
+                            color = Color(0xFF666666)
                         )
                         Spacer(modifier = Modifier.height(24.dp))
                     }
@@ -97,22 +106,20 @@ fun ProfileScreen(
                                     modifier = Modifier.fillMaxWidth(),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    CircularProgressIndicator(
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
+                                    CircularProgressIndicator(color = Color(0xFF2196F3))
                                 }
                                 is ProfileState.Success -> {
-                                    val profile = (profileState as ProfileState.Success).userProfile
                                     ProfileUserDataSection(
-                                        profile = profile,
+                                        profile = (profileState as ProfileState.Success).userProfile,
                                         onProfileChanged = { userProfileViewModel.saveUserProfile(it) }
                                     )
                                 }
                                 is ProfileState.Error -> Text(
-                                    "Bąd: ${(profileState as ProfileState.Error).error}",
-                                    color = MaterialTheme.colorScheme.error
+                                    "Błąd: ${(profileState as ProfileState.Error).error}",
+                                    color = Color.Red,
+                                    fontSize = 14.sp
                                 )
-                                else -> Text("Brak danych profilu.")
+                                else -> Text("Brak danych profilu.", fontSize = 14.sp)
                             }
                         }
                     }
@@ -129,33 +136,37 @@ fun ProfileScreen(
                                     Spacer(modifier = Modifier.height(6.dp))
                                     Text(
                                         text = "📊 Statystyki",
-                                        style = MaterialTheme.typography.titleSmall,
+                                        fontSize = 16.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onSurface
+                                        color = Color.Black
                                     )
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Row {
                                         Text(
                                             "Custom: ${profile.customCount}",
                                             modifier = Modifier.weight(1f),
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            color = Color(0xFF666666),
+                                            fontSize = 14.sp
                                         )
                                         Text(
                                             "Generowane: ${profile.generatedCount}",
                                             modifier = Modifier.weight(1f),
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            color = Color(0xFF666666),
+                                            fontSize = 14.sp
                                         )
                                     }
                                     Row {
                                         Text(
                                             "Wszystkie: ${profile.totalCount}",
                                             modifier = Modifier.weight(1f),
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            color = Color(0xFF666666),
+                                            fontSize = 14.sp
                                         )
                                         Text(
                                             "Dni w app: ${profile.activeDays}",
                                             modifier = Modifier.weight(1f),
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            color = Color(0xFF666666),
+                                            fontSize = 14.sp
                                         )
                                     }
                                     Spacer(modifier = Modifier.height(16.dp))
@@ -176,7 +187,7 @@ fun ProfileScreen(
                                         profile.badges.filter { it.name.startsWith("Days") }
                                     )
                                 }
-                                else -> Text("Brak danych odznak.")
+                                else -> Text("Brak danych odznak.", fontSize = 14.sp)
                             }
                         }
                     }
@@ -211,17 +222,180 @@ fun ProfileScreen(
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 12.dp)
                         .height(50.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error
-                    )
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
                 ) {
                     Text(
                         text = "🚪 Wyloguj się",
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp
                     )
                 }
             }
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ProfileUserDataSection(
+    profile: UserProfile,
+    onProfileChanged: (UserProfile) -> Unit
+) {
+    var firstName by remember { mutableStateOf(profile.firstName) }
+    var lastName by remember { mutableStateOf(profile.lastName) }
+    var birthDate by remember { mutableStateOf(profile.birthDate) }
+    var gender by remember { mutableStateOf(profile.gender) }
+
+    var showDatePicker by remember { mutableStateOf(false) }
+    var selectedDateMillis by remember { mutableStateOf<Long?>(null) }
+
+    var expandedGender by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
+    val displayDateFormat = remember { SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()) }
+    val storageDateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+
+    fun parseBirthDate(dateStr: String): Long? {
+        return try {
+            val date = storageDateFormat.parse(dateStr)
+            date?.time
+        } catch (e: Exception) {
+            null
+        }
+    }
+
+    LaunchedEffect(birthDate) {
+        selectedDateMillis = parseBirthDate(birthDate)
+    }
+
+    val displayBirthDate = if (birthDate.isNotBlank()) {
+        try {
+            val date = storageDateFormat.parse(birthDate)
+            displayDateFormat.format(date ?: Date())
+        } catch (e: Exception) {
+            birthDate
+        }
+    } else ""
+
+    Column(
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        modifier = Modifier.padding(16.dp)
+    ) {
+        OutlinedTextField(
+            value = firstName,
+            onValueChange = { firstName = it },
+            label = { Text("Imię") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
+        )
+
+        OutlinedTextField(
+            value = lastName,
+            onValueChange = { lastName = it },
+            label = { Text("Nazwisko") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
+        )
+
+        OutlinedTextField(
+            value = displayBirthDate,
+            onValueChange = { },
+            label = { Text("Data urodzenia") },
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { showDatePicker = true },
+            readOnly = true,
+            singleLine = true
+        )
+
+
+
+        ExposedDropdownMenuBox(
+            expanded = expandedGender,
+            onExpandedChange = { expandedGender = !expandedGender }
+        ) {
+            OutlinedTextField(
+                value = gender.ifEmpty { "Wybierz płeć" },
+                onValueChange = { },
+                readOnly = true,
+                label = { Text("Płeć") },
+                trailingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.ArrowDropDown,
+                        contentDescription = null,
+                        tint = if (expandedGender) Color.Blue else Color.Gray
+                    )
+                },
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth()
+            )
+
+            ExposedDropdownMenu(
+                expanded = expandedGender,
+                onDismissRequest = { expandedGender = false }
+            ) {
+                listOf("Mężczyzna", "Kobieta", "Inne").forEach { option ->
+                    DropdownMenuItem(
+                        text = { Text(option) },
+                        onClick = {
+                            gender = option
+                            expandedGender = false
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+        }
+
+        Button(
+            onClick = {
+                val updatedProfile = profile.copy(
+                    firstName = firstName.trim(),
+                    lastName = lastName.trim(),
+                    birthDate = birthDate,
+                    gender = gender
+                )
+                onProfileChanged(updatedProfile)
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("💾 Zapisz zmiany")
+        }
+    }
+
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = selectedDateMillis)
+
+        AlertDialog(
+            onDismissRequest = { showDatePicker = false },
+            title = { Text("Wybierz datę urodzenia") },
+            text = {
+                DatePicker(
+                    state = datePickerState,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        datePickerState.selectedDateMillis?.let { millis ->
+                            val date = Date(millis)
+                            birthDate = storageDateFormat.format(date)
+                            selectedDateMillis = millis
+                        }
+                        showDatePicker = false
+                    }
+                ) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text("Anuluj")
+                }
+            }
+        )
     }
 }
 
@@ -284,7 +458,7 @@ private fun VideoSection() {
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         videoCategories.forEach { (categoryName, variants) ->
-            Surface(
+            Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable {
@@ -295,8 +469,8 @@ private fun VideoSection() {
                                 expandedCategories + categoryName
                             }
                     },
-                shape = MaterialTheme.shapes.medium,
-                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5))
             ) {
                 Row(
                     modifier = Modifier
@@ -306,15 +480,15 @@ private fun VideoSection() {
                 ) {
                     Text(
                         text = categoryName,
-                        style = MaterialTheme.typography.titleMedium,
+                        fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.weight(1f),
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = Color.Black
                     )
                     Text(
                         text = if (categoryName in expandedCategories) "▲" else "▼",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.primary
+                        fontSize = 18.sp,
+                        color = Color(0xFF2196F3)
                     )
                 }
             }
@@ -338,9 +512,7 @@ private fun VideoSection() {
                                             expandedVideos + item.key
                                         }
                                 },
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surface
-                            )
+                            colors = CardDefaults.cardColors(containerColor = Color.White)
                         ) {
                             Row(
                                 modifier = Modifier
@@ -350,14 +522,14 @@ private fun VideoSection() {
                             ) {
                                 Text(
                                     text = item.title,
-                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontSize = 16.sp,
                                     modifier = Modifier.weight(1f),
-                                    color = MaterialTheme.colorScheme.onSurface
+                                    color = Color.Black
                                 )
                                 Text(
                                     text = if (item.key in expandedVideos) "▲" else "▶",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = MaterialTheme.colorScheme.primary
+                                    fontSize = 18.sp,
+                                    color = Color(0xFF2196F3)
                                 )
                             }
                         }
@@ -367,18 +539,16 @@ private fun VideoSection() {
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(top = 8.dp),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.surface
-                                )
+                                colors = CardDefaults.cardColors(containerColor = Color.White)
                             ) {
                                 Column(
                                     modifier = Modifier.padding(12.dp)
                                 ) {
                                     Text(
                                         text = item.title,
-                                        style = MaterialTheme.typography.titleMedium,
+                                        fontSize = 18.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = MaterialTheme.colorScheme.onSurface
+                                        color = Color.Black
                                     )
                                     Spacer(modifier = Modifier.height(8.dp))
                                     NetworkVideoPlayer(
@@ -411,11 +581,12 @@ private fun TrainingHistorySection(
             contentAlignment = Alignment.Center
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(text = "📭", style = MaterialTheme.typography.headlineLarge)
+                Text(text = "📭", fontSize = 48.sp)
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = "Brak historii treningów",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = Color(0xFF999999),
+                    fontSize = 16.sp
                 )
             }
         }
@@ -432,44 +603,45 @@ private fun TrainingHistorySection(
                 ) {
                     Text(
                         text = training.name,
-                        style = MaterialTheme.typography.titleMedium,
+                        fontSize = 18.sp,
                         fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        color = Color.Black,
                         modifier = Modifier.weight(1f)
                     )
                     Text(
                         text = if (expanded) "▲" else "▼",
-                        color = MaterialTheme.colorScheme.primary
+                        color = Color(0xFF2196F3),
+                        fontSize = 18.sp
                     )
                 }
 
                 if (training.creationDate.isNotBlank()) {
                     Text(
                         text = "🗓️ Utworzono: ${formatDate(training.creationDate)}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        fontSize = 12.sp,
+                        color = Color(0xFF999999)
                     )
                 }
 
                 if (!training.completedDate.isNullOrBlank()) {
                     Text(
                         text = "✅ Ukończono: ${formatDate(training.completedDate)}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        fontSize = 12.sp,
+                        color = Color(0xFF999999)
                     )
                 }
 
                 Text(
                     text = "⭐ Ocena: ${training.rating ?: 0}/5",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    fontSize = 12.sp,
+                    color = Color(0xFF999999)
                 )
 
                 if (!training.note.isNullOrBlank()) {
                     Text(
                         text = "📝 Notatka: ${training.note}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        fontSize = 12.sp,
+                        color = Color(0xFF999999)
                     )
                 }
 
@@ -478,22 +650,22 @@ private fun TrainingHistorySection(
                         training.days.forEachIndexed { dayIdx, day ->
                             Text(
                                 text = "Dzień ${dayIdx + 1}",
-                                style = MaterialTheme.typography.labelLarge,
+                                fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.primary,
+                                color = Color(0xFF2196F3),
                                 modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
                             )
                             day.tasks.sortedBy { it.order }.forEach { task ->
                                 Text(
                                     text = "${task.order}. ${task.name}",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurface,
+                                    fontSize = 14.sp,
+                                    color = Color.Black,
                                     modifier = Modifier.padding(start = 16.dp)
                                 )
                                 Text(
                                     text = "Opis: ${task.description}",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontSize = 12.sp,
+                                    color = Color(0xFF999999),
                                     modifier = Modifier.padding(start = 16.dp, bottom = 4.dp)
                                 )
                             }
@@ -502,7 +674,8 @@ private fun TrainingHistorySection(
                 }
                 HorizontalDivider(
                     modifier = Modifier.padding(vertical = 8.dp),
-                    color = MaterialTheme.colorScheme.outlineVariant
+                    color = Color(0xFFE0E0E0),
+                    thickness = 1.dp
                 )
             }
         }

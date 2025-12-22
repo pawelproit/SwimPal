@@ -84,5 +84,8 @@ dependencies {
     implementation ("androidx.media3:media3-ui:1.3.1")
     implementation ("androidx.media3:media3-common:1.3.1")
 
+    implementation("androidx.compose.material3:material3:1.2.1")
+
+
 
 }

@@ -47,28 +47,28 @@ fun MainScreen(
         if (profileState is ProfileState.Success) {
             val profile = (profileState as ProfileState.Success).userProfile
             val birthDate = profile.birthDate
-            val formats = listOf(
-                DateTimeFormatter.ofPattern("yyyy-MM-dd"),
-                DateTimeFormatter.ofPattern("dd.MM.yyyy")
-            )
-            val isBirthday = formats.any { format ->
+
+            val isBirthday = birthDate.isNotBlank() && run {
                 try {
-                    birthDate?.let {
-                        val parsed = LocalDate.parse(it, format)
-                        parsed.monthValue == currentDate.monthValue && parsed.dayOfMonth == currentDate.dayOfMonth
-                    } ?: false
+                    val format = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+                    val parsed = LocalDate.parse(birthDate, format)
+                    parsed.monthValue == currentDate.monthValue &&
+                            parsed.dayOfMonth == currentDate.dayOfMonth
                 } catch (_: Exception) {
                     false
                 }
             }
+
             val prefs = context.getSharedPreferences("birth_prefs", Context.MODE_PRIVATE)
             val lastShown = prefs.getString("last_birthday_greeting", null)
+
             if (isBirthday && lastShown != currentDate.toString()) {
                 showBirthdayDialog = true
                 prefs.edit().putString("last_birthday_greeting", currentDate.toString()).apply()
             }
         }
     }
+
 
     when (profileState) {
         is ProfileState.Loading -> {
