@@ -50,11 +50,12 @@ fun RegisterScreen(
     }
     val confirmPasswordError by remember(password, confirmPassword) {
         derivedStateOf {
-            if (confirmPassword.isBlank()) "Potwierdź hasło"
+            if (confirmPassword.isBlank()) "Pole wymagane"
             else if (password != confirmPassword) "Hasła nie są takie same"
             else null
         }
     }
+
 
     val showEmailError = emailTouched && emailError != null
     val showPasswordError = passwordTouched && passwordError != null
