@@ -24,6 +24,20 @@ import com.example.swimpal.ui.components.TrainingCompleteDialog
 import com.example.swimpal.ui.components.TrainingDeleteDialog
 import com.example.swimpal.ui.components.globalOpis
 
+/**
+ * Main screen for browsing and managing user's training plans in the SwimPal app.
+ *
+ * Presents generated and custom trainings with filtering, expandable cards,
+ * and dialogs for completing or deleting a training. The UI is fully state-driven
+ * and uses Material 3 components with subtle animations and a gradient background.
+ *
+ * All business logic (loading, deleting, completing trainings) is delegated
+ * to [TrainingViewModel]; this composable focuses solely on rendering UI state
+ * and forwarding user intents.
+ *
+ * @param trainingViewModel ViewModel providing training data and handling user actions.
+ */
+
 @Composable
 fun TrainingScreen(
     trainingViewModel: TrainingViewModel = viewModel()

@@ -7,6 +7,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.swimpal.model.UserProfile
 
+/**
+ * Section that allows the user to view and edit basic profile information.
+ *
+ * Email is displayed as read‑only, while first name, last name, birth date
+ * and gender can be edited and saved back to the parent via [onProfileChanged].
+ *
+ * @param profile Current user profile values.
+ * @param onProfileChanged Callback invoked with an updated [UserProfile] when user saves changes.
+ */
 @Composable
 fun ProfileUserDataSection(
     profile: UserProfile,

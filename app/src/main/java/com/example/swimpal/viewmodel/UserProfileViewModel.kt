@@ -13,6 +13,14 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+/**
+ * Represents the state of user profile loading and persistence.
+ *
+ * - [Idle]     No profile operation is currently in progress.
+ * - [Loading] Profile data is being loaded or saved.
+ * - [Success] Profile operation completed successfully and provides [UserProfile].
+ * - [Error]   Profile operation failed with a user-readable error message.
+ */
 sealed class ProfileState {
     object Idle : ProfileState()
     object Loading : ProfileState()
@@ -20,40 +28,79 @@ sealed class ProfileState {
     data class Error(val error: String) : ProfileState()
 }
 
+/**
+ * Represents UI state related to badge notifications.
+ *
+ * @property showDialog Indicates whether the badge dialog should be displayed.
+ * @property badgeName Name of the newly achieved badge.
+ * @property badgeDescription Description of the newly achieved badge.
+ */
 data class BadgeState(
     val showDialog: Boolean = false,
     val badgeName: String = "",
     val badgeDescription: String = ""
 )
 
+/**
+ * ViewModel responsible for managing user profile data and achievements.
+ *
+ * Handles:
+ * - Loading and saving user profile data in Firestore.
+ * - Calculating and updating badges based on user statistics.
+ * - Detecting newly achieved badges and triggering UI notifications.
+ *
+ * Exposes profile and badge states in a reactive form for the UI layer.
+ */
 class UserProfileViewModel : ViewModel() {
 
     private val firestore = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
+
     private val currentUid get() = auth.currentUser?.uid
     private val currentEmail get() = auth.currentUser?.email.orEmpty()
 
     private val _profileState = MutableStateFlow<ProfileState>(ProfileState.Idle)
+
+    /**
+     * Public profile state observed by the UI.
+     */
     val profileState: StateFlow<ProfileState> = _profileState
 
     private val _badgeState = mutableStateOf(BadgeState())
+
+    /**
+     * Public badge UI state observed by Compose.
+     */
     val badgeState: State<BadgeState> = _badgeState
 
+    // Badge identifiers
     private val BADGE_CUSTOM_5 = "Custom 5"
     private val BADGE_CUSTOM_10 = "Custom 10"
-    private val BADGE_GENERATED_5 = "Generated 5"
-    private val BADGE_GENERATED_10 = "Generated 10"
-    private val BADGE_TOTAL_20 = "Total 20"
-    private val BADGE_TOTAL_50 = "Total 50"
-    private val BADGE_DAYS_5 = "Days 5"
-    private val BADGE_DAYS_20 = "Days 20"
     private val BADGE_CUSTOM_20 = "Custom 20"
     private val BADGE_CUSTOM_50 = "Custom 50"
+
+    private val BADGE_GENERATED_5 = "Generated 5"
+    private val BADGE_GENERATED_10 = "Generated 10"
     private val BADGE_GENERATED_20 = "Generated 20"
     private val BADGE_GENERATED_50 = "Generated 50"
+
+    private val BADGE_TOTAL_20 = "Total 20"
+    private val BADGE_TOTAL_50 = "Total 50"
     private val BADGE_TOTAL_100 = "Total 100"
+
+    private val BADGE_DAYS_5 = "Days 5"
+    private val BADGE_DAYS_20 = "Days 20"
     private val BADGE_DAYS_50 = "Days 50"
 
+    /**
+     * Builds a list of default badges based on user statistics.
+     *
+     * @param custom Number of custom trainings created.
+     * @param generated Number of generated trainings created.
+     * @param total Total number of trainings.
+     * @param days Number of active training days.
+     * @return List of calculated [Badge] objects.
+     */
     private fun defaultBadges(
         custom: Int,
         generated: Int,
@@ -76,6 +123,13 @@ class UserProfileViewModel : ViewModel() {
         Badge(BADGE_DAYS_50, "50 aktywnych dni", days >= 50)
     )
 
+    /**
+     * Checks for newly achieved badges and updates Firestore if needed.
+     *
+     * If a badge has just been achieved, triggers a badge dialog via [badgeState].
+     *
+     * @param profile Current user profile.
+     */
     private fun checkAndShowNewBadges(profile: UserProfile) {
         val baseBadges = defaultBadges(
             profile.customCount,
@@ -120,6 +174,14 @@ class UserProfileViewModel : ViewModel() {
         }
     }
 
+    /**
+     * Saves the user profile to Firestore.
+     *
+     * Automatically recalculates badges, updates profile metadata and
+     * checks for newly achieved badges after saving.
+     *
+     * @param userProfile Profile data to persist.
+     */
     fun saveUserProfile(userProfile: UserProfile) {
         val uid = currentUid ?: return
 
@@ -149,6 +211,11 @@ class UserProfileViewModel : ViewModel() {
             }
     }
 
+    /**
+     * Loads the user profile from Firestore.
+     *
+     * If the profile does not exist, creates an empty profile with default values.
+     */
     fun loadUserProfile() {
         val uid = currentUid ?: return
 
@@ -171,6 +238,11 @@ class UserProfileViewModel : ViewModel() {
             }
     }
 
+    /**
+     * Marks a badge as seen and clears the badge dialog state.
+     *
+     * @param badgeName Name of the badge acknowledged by the user.
+     */
     fun markBadgeAsSeen(badgeName: String) {
         _badgeState.value = BadgeState()
 
@@ -192,5 +264,4 @@ class UserProfileViewModel : ViewModel() {
             userRef.update("badges", updatedBadges)
         }
     }
-
 }

@@ -12,6 +12,20 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.swimpal.viewmodel.TrainingViewModel
 import com.example.swimpal.viewmodel.UserProfileViewModel
 
+/**
+ * Screen for generating and saving an automatically created training plan.
+ *
+ * Allows selecting training type, difficulty and number of days.
+ * On generation, saves the training via [TrainingViewModel] and reloads
+ * the user profile to update statistics and badges.
+ *
+ * Displays informational or error messages and shows a badge dialog
+ * when a new badge is achieved.
+ *
+ * @param trainingViewModel ViewModel responsible for training generation and persistence.
+ * @param userProfileViewModel ViewModel used to refresh profile and badge state.
+ */
+
 @Composable
 fun GeneratedTrainingScreen(
     trainingViewModel: TrainingViewModel = viewModel(),
@@ -46,12 +60,22 @@ fun GeneratedTrainingScreen(
         )
         Spacer(modifier = Modifier.height(24.dp))
 
-        Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text("🏊 Typ treningu", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(
+                    "🏊 Typ treningu",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
                 Spacer(modifier = Modifier.height(12.dp))
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
                         trainingTypes.take(2).forEach { type ->
                             FilterChip(
                                 selected = selectedType == type,
@@ -61,7 +85,10 @@ fun GeneratedTrainingScreen(
                             )
                         }
                     }
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
                         trainingTypes.drop(2).forEach { type ->
                             FilterChip(
                                 selected = selectedType == type,
@@ -76,9 +103,16 @@ fun GeneratedTrainingScreen(
         }
 
         Spacer(modifier = Modifier.height(16.dp))
-        Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text("💪 Poziom trudności", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(
+                    "💪 Poziom trudności",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
                 Spacer(modifier = Modifier.height(8.dp))
                 Slider(
                     value = selectedDifficulty.toFloat(),
@@ -86,14 +120,29 @@ fun GeneratedTrainingScreen(
                     valueRange = 1f..3f,
                     steps = 1
                 )
-                Text("Poziom: $selectedDifficulty ${when(selectedDifficulty) { 1 -> "⭐" 2 -> "⭐⭐" else -> "⭐⭐⭐" }}")
+                Text(
+                    "Poziom: $selectedDifficulty ${
+                        when (selectedDifficulty) {
+                            1 -> "⭐"
+                            2 -> "⭐⭐"
+                            else -> "⭐⭐⭐"
+                        }
+                    }"
+                )
             }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
-        Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text("📅 Ilość dni treningowych", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(
+                    "📅 Ilość dni treningowych",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
                 Spacer(modifier = Modifier.height(8.dp))
                 Slider(
                     value = selectedDays.toFloat(),
@@ -136,7 +185,9 @@ fun GeneratedTrainingScreen(
                     onError = { errorMsg = it.message ?: "Błąd zapisu treningu" }
                 )
             },
-            modifier = Modifier.fillMaxWidth().height(56.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
         ) {
             Text("🚀 Generuj trening", fontWeight = FontWeight.Bold)
         }

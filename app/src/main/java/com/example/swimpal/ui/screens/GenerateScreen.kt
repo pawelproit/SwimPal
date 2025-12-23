@@ -10,6 +10,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.navigation.compose.*
 import com.example.swimpal.ui.screens.generateScreen.*
 
+/**
+ * Wrapper composable providing a two-tab interface for training generation.
+ *
+ * Creates an internal NavController and hosts a nested navigation graph
+ * with two routes: generated trainings and a custom training editor.
+ * The selected tab is derived from the current navigation route.
+ *
+ * @param startTab Optional initial tab selector; when equal to "custom",
+ * the custom training editor is shown first, otherwise the generated tab is used.
+ */
+
 @Composable
 fun GenerateScreen(startTab: String? = null) {
 

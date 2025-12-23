@@ -20,6 +20,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.swimpal.viewmodel.AuthState
 
+/**
+ * Registration screen for creating a new SwimPal user account.
+ *
+ * Displays a registration form with validation for email and password fields,
+ * handles loading and error states, and allows navigation to the login screen.
+ * All validation and UI state are managed locally, while registration logic
+ * is delegated to the authentication layer.
+ *
+ * @param authState Current authentication state provided by the ViewModel.
+ * @param onRegister Invoked when the user submits a valid registration form.
+ * @param onNavigateToLogin Navigates the user to the login screen.
+ */
+
+
 @Composable
 fun RegisterScreen(
     authState: AuthState,

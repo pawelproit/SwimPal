@@ -13,6 +13,18 @@ import com.example.swimpal.viewmodel.AuthState
 import com.example.swimpal.viewmodel.AuthViewModel
 import com.example.swimpal.viewmodel.UserProfileViewModel
 
+/**
+ * Root navigation graph for the application.
+ *
+ * Handles navigation between the welcome screen, authentication flow
+ * (login/register), personal data form and the main screen with bottom
+ * navigation. Listens to [AuthState] and redirects after successful login
+ * or registration.
+ *
+ * @param navController Controller used to perform navigation actions.
+ * @param authViewModel ViewModel responsible for authentication state.
+ * @param userProfileViewModel ViewModel responsible for user profile operations.
+ */
 @Composable
 fun AppNavGraph(
     navController: NavHostController,
@@ -102,6 +114,5 @@ fun AppNavGraph(
                 }
             )
         }
-
     }
 }

@@ -16,6 +16,16 @@ import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 
+/**
+ * Plays a network video using ExoPlayer inside a Compose UI.
+ *
+ * The player supports toggling between normal and full‑screen height inside
+ * the current composable and releases resources when it leaves composition.
+ *
+ * @param videoUrl URL of the video to be streamed.
+ * @param title Optional title displayed above the video player.
+ * @param modifier Modifier used to adjust layout of the whole component.
+ */
 @Composable
 fun NetworkVideoPlayer(
     videoUrl: String,

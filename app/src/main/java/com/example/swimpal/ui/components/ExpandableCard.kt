@@ -11,6 +11,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
+/**
+ * Card that can expand and collapse to show or hide its [content].
+ *
+ * The header displays [title] and an arrow indicator based on [expanded].
+ * Tapping the header triggers [onToggle].
+ *
+ * @param title Title shown in the card header.
+ * @param expanded Current expansion state of the card.
+ * @param onToggle Callback invoked when the header is clicked.
+ * @param content Composable content that is shown only when [expanded] is true.
+ */
 @Composable
 fun ExpandableCard(
     title: String,

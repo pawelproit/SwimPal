@@ -8,7 +8,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.*
 import com.example.swimpal.ui.screens.*
+import com.example.swimpal.ui.screens.main.MainScreen
 
+/**
+ * Main screen wrapper that provides a bottom navigation bar and nested nav graph.
+ *
+ * Hosts the main dashboard, generation, training list and profile screens,
+ * and manages navigation between them while preserving state where needed.
+ *
+ * @param onLogout Callback invoked when the user chooses to log out from the profile screen.
+ */
 @Composable
 fun MainScreenWithBottomNav(
     onLogout: () -> Unit

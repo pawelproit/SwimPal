@@ -3,6 +3,12 @@ package com.example.swimpal.ui.components
 import java.text.SimpleDateFormat
 import java.util.*
 
+/**
+ * Global description text explaining swimming styles and example exercises.
+ *
+ * This text is used in the training screen to provide users with additional
+ * context and guidance about different swimming techniques.
+ */
 val globalOpis = """
 🟦 Kraul (styl dowolny)
 
@@ -53,6 +59,16 @@ val globalOpis = """
     Zmienny na nogi – wszystkie style pływane tylko nogami z deską.
 """.trimIndent()
 
+/**
+ * Formats a date string from the storage format to a user‑friendly one.
+ *
+ * Input strings are expected in the format `yyyy-MM-dd`. When parsing succeeds,
+ * the date is returned in the format `dd.MM.yyyy`. If parsing fails, the original
+ * [dateString] is returned unchanged.
+ *
+ * @param dateString Raw date string in storage format.
+ * @return Formatted date string or the original value when parsing is not possible.
+ */
 fun formatDate(dateString: String): String {
     return try {
         if (dateString.isBlank()) return ""

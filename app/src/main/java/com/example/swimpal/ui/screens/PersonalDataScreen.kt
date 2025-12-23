@@ -16,6 +16,23 @@ import com.example.swimpal.model.UserProfile
 import com.example.swimpal.viewmodel.ProfileState
 import java.util.Calendar
 
+/**
+ * Composable screen displayed after user registration to collect additional
+ * personal information required for profile completion.
+ *
+ * The screen manages local form state for first name, last name, birth date
+ * and gender. The "Save" action is enabled only when all fields are non-blank.
+ *
+ * UI reacts to [ProfileState]:
+ * - [ProfileState.Loading] displays a progress indicator instead of the save button.
+ * - [ProfileState.Error] displays an error message below the form.
+ * - [ProfileState.Success] triggers [onSuccess] callback.
+ *
+ * @param profileState Current state of profile persistence operation.
+ * @param onSave Invoked with a populated [UserProfile] when user submits valid data.
+ * @param onSuccess Called when profile data has been successfully saved.
+ */
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PersonalDataScreen(

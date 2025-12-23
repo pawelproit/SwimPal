@@ -20,6 +20,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.swimpal.viewmodel.AuthState
 
+/**
+ * Login screen that allows the user to authenticate with email and password.
+ *
+ * It performs basic client-side validation, displays error messages from
+ * [AuthState], and invokes [onLogin] only when the form is valid.
+ *
+ * @param authState Current authentication state used to show loading and errors.
+ * @param onLogin Callback invoked with email and password when the user submits.
+ * @param onNavigateToRegister Callback invoked when user chooses to register instead.
+ */
 @Composable
 fun LoginScreen(
     authState: AuthState,

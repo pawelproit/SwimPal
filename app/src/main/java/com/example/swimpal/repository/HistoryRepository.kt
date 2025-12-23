@@ -10,6 +10,12 @@ import kotlinx.coroutines.flow.StateFlow
 import java.text.SimpleDateFormat
 import java.util.*
 
+/**
+ * Repository responsible for managing the user's training history stored in Firestore.
+ *
+ * It exposes a reactive stream of history trainings and provides helper methods to
+ * add completed trainings to history and parse Firestore documents into domain models.
+ */
 class HistoryRepository {
 
     private val db = FirebaseFirestore.getInstance()
@@ -17,8 +23,20 @@ class HistoryRepository {
     private val user get() = auth.currentUser
 
     private val _historyTrainings = MutableStateFlow<List<Training>>(emptyList())
+
+    /**
+     * Public read-only stream of the user's training history.
+     *
+     * The list is automatically updated when Firestore emits new snapshots.
+     */
     val historyTrainings: StateFlow<List<Training>> = _historyTrainings
 
+    /**
+     * Converts a [Training] object into a map representation suitable for Firestore.
+     *
+     * @param training Training instance that should be stored in the history collection.
+     * @return Map with primitive and nested values that can be persisted in Firestore.
+     */
     private fun toHistoryMap(training: Training): Map<String, Any> = mapOf(
         "name" to training.name,
         "days" to training.days.map { day ->
@@ -39,6 +57,11 @@ class HistoryRepository {
         "note" to (training.note ?: "")
     )
 
+    /**
+     * Subscribes to the user's history trainings in Firestore and updates [historyTrainings].
+     *
+     * If the user is not logged in or an error occurs, the local history list is set to empty.
+     */
     fun fetchHistoryTrainings() {
         val u = user ?: run {
             _historyTrainings.value = emptyList()
@@ -59,6 +82,19 @@ class HistoryRepository {
             }
     }
 
+    /**
+     * Adds a completed training to the user's history in Firestore.
+     *
+     * The method sets the completion date, rating and note, writes the data to
+     * the `history_trainings` subcollection, refreshes local history on success,
+     * and forwards success or error via callbacks.
+     *
+     * @param training Training that has been completed.
+     * @param rating User rating for the completed training.
+     * @param note Optional note entered by the user about this training.
+     * @param onSuccess Callback invoked after a successful write and local refresh.
+     * @param onError Callback invoked when the user is not logged in or the write fails.
+     */
     fun addToHistory(
         training: Training,
         rating: Int,
@@ -90,6 +126,13 @@ class HistoryRepository {
             .addOnFailureListener { e -> onError(e) }
     }
 
+    /**
+     * Parses a Firestore document map into a [Training] history object.
+     *
+     * @param map Raw data map retrieved from Firestore.
+     * @param id Identifier of the Firestore document.
+     * @return Parsed [Training] instance or null if the map is invalid.
+     */
     private fun parseHistoryTraining(map: Map<String, Any>?, id: String): Training? {
         if (map == null) return null
 

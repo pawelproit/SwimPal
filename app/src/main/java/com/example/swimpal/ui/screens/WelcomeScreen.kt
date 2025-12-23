@@ -13,6 +13,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+/**
+ * Initial welcome screen introducing the application.
+ *
+ * Shows the logo, app name and a short tagline, and offers a single
+ * call-to-action button that continues the onboarding flow.
+ *
+ * @param onContinue Callback invoked when the user taps the continue button.
+ */
 @Composable
 fun WelcomeScreen(
     onContinue: () -> Unit

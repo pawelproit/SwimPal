@@ -13,6 +13,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.swimpal.model.Badge
 
+/**
+ * Displays a scrollable horizontal row of badges for a given category.
+ *
+ * The composable is rendered only when [badges] is not empty.
+ *
+ * @param kategoria Label of the badge category to be shown above the list.
+ * @param badges List of badges that belong to this category.
+ */
 @Composable
 fun BadgeCategoryScrollable(
     kategoria: String,
@@ -35,6 +43,14 @@ fun BadgeCategoryScrollable(
     }
 }
 
+/**
+ * Renders a single badge as a card with icon, name and description.
+ *
+ * Achieved badges are displayed using a filled star and normal card colors,
+ * while not yet achieved badges use an outlined star and subdued colors.
+ *
+ * @param badge Badge instance to display.
+ */
 @Composable
 fun BadgeItem(badge: Badge) {
     Card(

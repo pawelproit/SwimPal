@@ -14,6 +14,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.swimpal.model.Training
 
+/**
+ * Card displaying a single training with expandable details and actions.
+ *
+ * The header shows the training name and creation date, and provides a delete button.
+ * When [expanded] is true, all days and their tasks are shown, and the user can
+ * mark the training as completed via [onCompleteClick].
+ *
+ * @param training Training data to display.
+ * @param expanded Whether the card is currently expanded.
+ * @param onExpandClick Callback invoked when the header is tapped to toggle expansion.
+ * @param onDeleteClick Callback invoked when the delete icon is pressed.
+ * @param onCompleteClick Callback invoked when the user marks the training as completed.
+ */
 @Composable
 fun TrainingCard(
     training: Training,
@@ -82,8 +95,14 @@ fun TrainingCard(
                         ) {
                             Column(modifier = Modifier.padding(start = 16.dp)) {
                                 day.tasks.sortedBy { it.order }.forEach { task ->
-                                    Text("${task.order}. ${task.name}", style = MaterialTheme.typography.labelSmall)
-                                    Text("Opis: ${task.description}", style = MaterialTheme.typography.bodySmall)
+                                    Text(
+                                        "${task.order}. ${task.name}",
+                                        style = MaterialTheme.typography.labelSmall
+                                    )
+                                    Text(
+                                        "Opis: ${task.description}",
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
                                     Spacer(modifier = Modifier.height(4.dp))
                                 }
                             }

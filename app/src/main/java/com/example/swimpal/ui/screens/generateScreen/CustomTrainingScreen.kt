@@ -16,6 +16,21 @@ import com.example.swimpal.model.TrainingTaskInput
 import com.example.swimpal.viewmodel.TrainingViewModel
 import com.example.swimpal.viewmodel.UserProfileViewModel
 
+/**
+ * Screen for manually creating and saving a custom training plan.
+ *
+ * Supports adding and removing training days and tasks, validates that all
+ * fields are filled before saving, and persists the training via [TrainingViewModel].
+ * After a successful save, the form is reset and user profile data is refreshed.
+ *
+ * Displays informational or error messages and shows a badge dialog
+ * when a new badge is achieved.
+ *
+ * @param trainingViewModel ViewModel responsible for saving custom trainings.
+ * @param userProfileViewModel ViewModel used to refresh profile statistics and badges.
+ * @param onTrainingSaved Callback invoked after a successful save.
+ */
+
 @Composable
 fun CustomTrainingScreen(
     trainingViewModel: TrainingViewModel = viewModel(),
@@ -90,7 +105,9 @@ fun CustomTrainingScreen(
                                     }
                                 },
                                 label = { Text("Opis zadania ${taskIdx + 1}") },
-                                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 8.dp)
                             )
                             if (dayInput.tasks.size > 1) {
                                 Row {
