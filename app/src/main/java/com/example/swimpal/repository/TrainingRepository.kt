@@ -11,6 +11,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class TrainingRepository {
+
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
     private val user get() = auth.currentUser
@@ -45,89 +46,69 @@ class TrainingRepository {
     }
 
     fun fetchCustomTrainings() {
-        user?.let { u ->
-            db.collection("users")
-                .document(u.uid)
-                .collection("custom_trainings")
-                .addSnapshotListener { snapshot, error ->
-                    if (error != null || snapshot == null) {
-                        _customTrainings.value = emptyList()
-                        return@addSnapshotListener
-                    }
-                    _customTrainings.value = snapshot.documents.mapNotNull {
-                        parseTraining(it.data, it.id)
-                    }
-                }
-        }
-    }
-
-    fun fetchGeneratedTrainings() {
-        user?.let { u ->
-            db.collection("users")
-                .document(u.uid)
-                .collection("generated_trainings")
-                .addSnapshotListener { snapshot, error ->
-                    if (error != null || snapshot == null) {
-                        _generatedTrainings.value = emptyList()
-                        return@addSnapshotListener
-                    }
-                    _generatedTrainings.value = snapshot.documents.mapNotNull {
-                        parseTraining(it.data, it.id)
-                    }
-                }
-        }
-    }
-
-    fun saveCustomTraining(
-        trainingName: String,
-        days: List<TrainingDay>,
-        onSuccess: () -> Unit,
-        onError: (Exception) -> Unit
-    ) {
-        val u = user
-        if (u == null) {
-            onError(Exception("Nie zalogowano użytkownika"))
+        val u = user ?: run {
+            _customTrainings.value = emptyList()
             return
         }
-        val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-        val training = Training(
-            name = trainingName,
-            type = "",
-            days = days,
-            creationDate = today
-        )
 
         db.collection("users")
             .document(u.uid)
             .collection("custom_trainings")
-            .add(toMap(training))
-            .addOnSuccessListener { onSuccess() }
-            .addOnFailureListener { e -> onError(e) }
+            .addSnapshotListener { snapshot, error ->
+                if (error != null || snapshot == null) {
+                    _customTrainings.value = emptyList()
+                    return@addSnapshotListener
+                }
+                _customTrainings.value = snapshot.documents.mapNotNull {
+                    parseTraining(it.data, it.id)
+                }
+            }
     }
 
-    fun saveGeneratedTraining(
+    fun fetchGeneratedTrainings() {
+        val u = user ?: run {
+            _generatedTrainings.value = emptyList()
+            return
+        }
+
+        db.collection("users")
+            .document(u.uid)
+            .collection("generated_trainings")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null || snapshot == null) {
+                    _generatedTrainings.value = emptyList()
+                    return@addSnapshotListener
+                }
+                _generatedTrainings.value = snapshot.documents.mapNotNull {
+                    parseTraining(it.data, it.id)
+                }
+            }
+    }
+
+    fun saveTraining(
         trainingName: String,
-        trainingType: String,
+        type: String,
         days: List<TrainingDay>,
+        collection: String,
         onSuccess: () -> Unit,
         onError: (Exception) -> Unit
     ) {
-        val u = user
-        if (u == null) {
+        val u = user ?: run {
             onError(Exception("Nie zalogowano użytkownika"))
             return
         }
+
         val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
         val training = Training(
             name = trainingName,
-            type = trainingType,
+            type = type,
             days = days,
             creationDate = today
         )
 
         db.collection("users")
             .document(u.uid)
-            .collection("generated_trainings")
+            .collection(collection)
             .add(toMap(training))
             .addOnSuccessListener { onSuccess() }
             .addOnFailureListener { e -> onError(e) }
@@ -139,7 +120,11 @@ class TrainingRepository {
         onSuccess: () -> Unit,
         onError: (Exception) -> Unit
     ) {
-        val u = user ?: return
+        val u = user ?: run {
+            onError(Exception("Nie zalogowano użytkownika"))
+            return
+        }
+
         db.collection("users")
             .document(u.uid)
             .collection(collection)
@@ -182,6 +167,7 @@ class TrainingRepository {
 
     private fun parseTraining(map: Map<String, Any>?, id: String): Training? {
         if (map == null) return null
+
         val days = (map["days"] as? List<*>)?.mapNotNull { dayMap ->
             dayMap as? Map<*, *>
         }?.map { dayObj ->
@@ -194,6 +180,7 @@ class TrainingRepository {
                     order = (taskObj["order"] as? Long)?.toInt() ?: 0
                 )
             } ?: emptyList()
+
             TrainingDay(
                 dayName = dayObj["dayName"] as? String ?: "",
                 tasks = tasksList

@@ -14,6 +14,7 @@ sealed class AuthState {
 }
 
 class AuthViewModel : ViewModel() {
+
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
 
     private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
@@ -21,7 +22,7 @@ class AuthViewModel : ViewModel() {
 
     private fun handleAuthError(exception: Exception?): String {
         if (exception is FirebaseAuthException) {
-            return when (exception.errorCode) {      // <- kluczowe
+            return when (exception.errorCode) {
                 "ERROR_INVALID_CUSTOM_TOKEN",
                 "ERROR_CUSTOM_TOKEN_MISMATCH",
                 "ERROR_INVALID_CREDENTIAL" ->
@@ -47,6 +48,9 @@ class AuthViewModel : ViewModel() {
 
                 "ERROR_TOO_MANY_REQUESTS" ->
                     "Zbyt wiele prób. Spróbuj ponownie później"
+
+                "ERROR_NETWORK_REQUEST_FAILED" ->
+                    "Brak połączenia z internetem"
 
                 else ->
                     "Wystąpił błąd: ${exception.errorCode}"
@@ -85,6 +89,7 @@ class AuthViewModel : ViewModel() {
         auth.signOut()
         _authState.value = AuthState.Idle
     }
+
 
     fun isUserLoggedIn(): Boolean = auth.currentUser != null
 }

@@ -1,12 +1,10 @@
 package com.example.swimpal.ui.navigation
 
-import android.content.Context
 import androidx.compose.runtime.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.compose.ui.platform.LocalContext
 import com.example.swimpal.ui.screens.LoginScreen
 import com.example.swimpal.ui.screens.RegisterScreen
 import com.example.swimpal.ui.screens.PersonalDataScreen
@@ -21,7 +19,6 @@ fun AppNavGraph(
     authViewModel: AuthViewModel,
     userProfileViewModel: UserProfileViewModel = viewModel()
 ) {
-    val context = LocalContext.current
     val authState by authViewModel.authState.collectAsState()
     val profileState by userProfileViewModel.profileState.collectAsState()
 

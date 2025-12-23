@@ -11,6 +11,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class HistoryRepository {
+
     private val db = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
     private val user get() = auth.currentUser
@@ -39,20 +40,23 @@ class HistoryRepository {
     )
 
     fun fetchHistoryTrainings() {
-        user?.let { u ->
-            db.collection("users")
-                .document(u.uid)
-                .collection("history_trainings")
-                .addSnapshotListener { snapshot, error ->
-                    if (error != null || snapshot == null) {
-                        _historyTrainings.value = emptyList()
-                        return@addSnapshotListener
-                    }
-                    _historyTrainings.value = snapshot.documents.mapNotNull {
-                        parseHistoryTraining(it.data, it.id)
-                    }
-                }
+        val u = user ?: run {
+            _historyTrainings.value = emptyList()
+            return
         }
+
+        db.collection("users")
+            .document(u.uid)
+            .collection("history_trainings")
+            .addSnapshotListener { snapshot, error ->
+                if (error != null || snapshot == null) {
+                    _historyTrainings.value = emptyList()
+                    return@addSnapshotListener
+                }
+                _historyTrainings.value = snapshot.documents.mapNotNull {
+                    parseHistoryTraining(it.data, it.id)
+                }
+            }
     }
 
     fun addToHistory(
@@ -62,8 +66,7 @@ class HistoryRepository {
         onSuccess: () -> Unit,
         onError: (Exception) -> Unit
     ) {
-        val u = user
-        if (u == null) {
+        val u = user ?: run {
             onError(Exception("Nie zalogowano użytkownika"))
             return
         }
@@ -89,6 +92,7 @@ class HistoryRepository {
 
     private fun parseHistoryTraining(map: Map<String, Any>?, id: String): Training? {
         if (map == null) return null
+
         val days = (map["days"] as? List<*>)?.mapNotNull { dayMap ->
             dayMap as? Map<*, *>
         }?.map { dayObj ->
@@ -101,6 +105,7 @@ class HistoryRepository {
                     order = (taskObj["order"] as? Long)?.toInt() ?: 0
                 )
             } ?: emptyList()
+
             TrainingDay(
                 dayName = dayObj["dayName"] as? String ?: "",
                 tasks = tasksList
@@ -112,9 +117,9 @@ class HistoryRepository {
             name = map["name"] as? String ?: "",
             days = days,
             creationDate = map["creationDate"] as? String ?: "",
-            completedDate = map["completedDate"] as? String ?: "",
-            rating = (map["rating"] as? Long)?.toInt() ?: 0,
-            note = map["note"] as? String ?: ""
+            completedDate = map["completedDate"] as? String?,
+            rating = (map["rating"] as? Long)?.toInt(),
+            note = map["note"] as? String
         )
     }
 }

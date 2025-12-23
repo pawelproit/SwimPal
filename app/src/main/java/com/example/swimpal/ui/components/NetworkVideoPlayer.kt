@@ -1,6 +1,5 @@
 package com.example.swimpal.ui.components
 
-import android.app.Activity
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*

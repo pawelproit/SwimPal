@@ -192,8 +192,7 @@ fun MainScreenContent(
 
             StatsSection(
                 totalCount = profile.totalCount,
-                activeDays = profile.activeDays,
-                currentStreak = profile.currentStreak
+                activeDays = profile.activeDays
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -239,7 +238,7 @@ fun GreetingSection(userName: String?) {
 }
 
 @Composable
-fun StatsSection(totalCount: Int, activeDays: Int, currentStreak: Int) {
+fun StatsSection(totalCount: Int, activeDays: Int) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
@@ -262,7 +261,6 @@ fun StatsSection(totalCount: Int, activeDays: Int, currentStreak: Int) {
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 StatItem(icon = "🏅", value = totalCount.toString(), label = "Treningów")
-                StatItem(icon = "🔥", value = currentStreak.toString(), label = "Dni z rzędu")
                 StatItem(icon = "📅", value = activeDays.toString(), label = "Aktywnych dni")
             }
         }

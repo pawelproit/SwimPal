@@ -9,6 +9,7 @@ import com.example.swimpal.repository.UserStatsRepository
 import kotlinx.coroutines.flow.StateFlow
 
 class TrainingViewModel : ViewModel() {
+
     private val trainingRepo = TrainingRepository()
     private val historyRepo = HistoryRepository()
     private val statsRepo = UserStatsRepository()
@@ -42,12 +43,17 @@ class TrainingViewModel : ViewModel() {
             collectionName = collectionName,
             days = days,
             onSuccess = { trainingDays ->
-                trainingRepo.saveGeneratedTraining(
+                trainingRepo.saveTraining(
                     trainingName = "$type – poziom $difficulty ($days dni)",
-                    trainingType = type,           // WAŻNE: zapisujemy typ
+                    type = type,
                     days = trainingDays,
+                    collection = "generated_trainings",
                     onSuccess = {
-                        statsRepo.incrementGeneratedCount(onSuccess)
+                        statsRepo.incrementCount(
+                            isCustom = false,
+                            onSuccess = onSuccess,
+                            onError = onError
+                        )
                     },
                     onError = onError
                 )
@@ -62,11 +68,17 @@ class TrainingViewModel : ViewModel() {
         onSuccess: () -> Unit,
         onError: (Exception) -> Unit
     ) {
-        trainingRepo.saveCustomTraining(
-            trainingName,
-            days,
+        trainingRepo.saveTraining(
+            trainingName = trainingName,
+            type = "custom",
+            days = days,
+            collection = "custom_trainings",
             onSuccess = {
-                statsRepo.incrementCustomCount(onSuccess)
+                statsRepo.incrementCount(
+                    isCustom = true,
+                    onSuccess = onSuccess,
+                    onError = onError
+                )
             },
             onError = onError
         )
@@ -90,11 +102,16 @@ class TrainingViewModel : ViewModel() {
         onError: (Exception) -> Unit
     ) {
         historyRepo.addToHistory(
-            training,
-            rating,
-            note,
+            training = training,
+            rating = rating,
+            note = note,
             onSuccess = {
-                trainingRepo.deleteTraining(training.id, collectionName, onSuccess, onError)
+                trainingRepo.deleteTraining(
+                    trainingId = training.id,
+                    collection = collectionName,
+                    onSuccess = onSuccess,
+                    onError = onError
+                )
             },
             onError = onError
         )

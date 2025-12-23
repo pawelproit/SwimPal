@@ -7,8 +7,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.swimpal.model.TrainingTask
@@ -17,7 +15,6 @@ import com.example.swimpal.model.TrainingDayInput
 import com.example.swimpal.model.TrainingTaskInput
 import com.example.swimpal.viewmodel.TrainingViewModel
 import com.example.swimpal.viewmodel.UserProfileViewModel
-import com.example.swimpal.viewmodel.ProfileState
 
 @Composable
 fun CustomTrainingScreen(

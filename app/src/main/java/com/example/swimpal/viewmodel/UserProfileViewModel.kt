@@ -4,15 +4,14 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.example.swimpal.model.UserProfile
+import com.example.swimpal.model.Badge
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import com.example.swimpal.model.Badge
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-
 
 sealed class ProfileState {
     object Idle : ProfileState()
@@ -28,10 +27,12 @@ data class BadgeState(
 )
 
 class UserProfileViewModel : ViewModel() {
+
     private val firestore = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
     private val currentUid get() = auth.currentUser?.uid
     private val currentEmail get() = auth.currentUser?.email.orEmpty()
+
     private val _profileState = MutableStateFlow<ProfileState>(ProfileState.Idle)
     val profileState: StateFlow<ProfileState> = _profileState
 
@@ -119,30 +120,40 @@ class UserProfileViewModel : ViewModel() {
         }
     }
 
-
     fun saveUserProfile(userProfile: UserProfile) {
         val uid = currentUid ?: return
+
         val freshBadges = defaultBadges(
             userProfile.customCount,
             userProfile.generatedCount,
             userProfile.totalCount,
             userProfile.activeDays
         )
-        val withBadges = userProfile.copy(uid = uid, email = currentEmail, badges = freshBadges)
+
+        val withBadges = userProfile.copy(
+            uid = uid,
+            email = currentEmail,
+            badges = freshBadges
+        )
+
         _profileState.value = ProfileState.Loading
+
         firestore.collection("users").document(uid).set(withBadges)
             .addOnSuccessListener {
                 _profileState.value = ProfileState.Success(withBadges)
                 checkAndShowNewBadges(withBadges)
             }
             .addOnFailureListener { e ->
-                _profileState.value = ProfileState.Error(e.localizedMessage ?: "Błąd zapisu profilu")
+                _profileState.value =
+                    ProfileState.Error(e.localizedMessage ?: "Błąd zapisu profilu")
             }
     }
 
     fun loadUserProfile() {
         val uid = currentUid ?: return
+
         _profileState.value = ProfileState.Loading
+
         firestore.collection("users").document(uid).get()
             .addOnSuccessListener { doc ->
                 val profile = doc.toObject(UserProfile::class.java)
@@ -150,21 +161,26 @@ class UserProfileViewModel : ViewModel() {
                     _profileState.value = ProfileState.Success(profile)
                     checkAndShowNewBadges(profile)
                 } else {
-                    _profileState.value = ProfileState.Success(UserProfile(uid = uid, email = currentEmail))
+                    val emptyProfile = UserProfile(uid = uid, email = currentEmail)
+                    _profileState.value = ProfileState.Success(emptyProfile)
                 }
             }
             .addOnFailureListener { e ->
-                _profileState.value = ProfileState.Error(e.localizedMessage ?: "Błąd pobierania profilu")
+                _profileState.value =
+                    ProfileState.Error(e.localizedMessage ?: "Błąd pobierania profilu")
             }
     }
 
     fun markBadgeAsSeen(badgeName: String) {
         _badgeState.value = BadgeState()
-        val userId = auth.currentUser?.uid ?: return
-        val db = FirebaseFirestore.getInstance()
-        val userRef = db.collection("users").document(userId)
+
+        val uid = currentUid ?: return
+        val userRef = firestore.collection("users").document(uid)
+
         userRef.get().addOnSuccessListener { doc ->
-            val badges = doc.get("badges") as? List<Map<String, Any>> ?: return@addOnSuccessListener
+            val badges = doc.get("badges") as? List<Map<String, Any>>
+                ?: return@addOnSuccessListener
+
             val updatedBadges = badges.map { badgeMap ->
                 if (badgeMap["name"] == badgeName) {
                     badgeMap.toMutableMap().apply { put("isNew", false) }
@@ -172,7 +188,9 @@ class UserProfileViewModel : ViewModel() {
                     badgeMap
                 }
             }
+
             userRef.update("badges", updatedBadges)
         }
     }
+
 }
