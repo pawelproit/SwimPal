@@ -1,13 +1,10 @@
 package com.example.swimpal.ui.components
 
 import android.net.Uri
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Fullscreen
-import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -17,15 +14,22 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 
 /**
- * Plays a network video using ExoPlayer inside a Compose UI.
+ * Displays a network-streamed video using ExoPlayer embedded in
+ * a Jetpack Compose UI via AndroidView.
  *
- * The player supports toggling between normal and full‑screen height inside
- * the current composable and releases resources when it leaves composition.
+ * The composable properly manages the ExoPlayer lifecycle by creating
+ * the player only for the given video URL and releasing all resources
+ * when the composable leaves the composition.
  *
- * @param videoUrl URL of the video to be streamed.
- * @param title Optional title displayed above the video player.
- * @param modifier Modifier used to adjust layout of the whole component.
+ * This implementation is lightweight and safe to use inside a LazyColumn,
+ * without custom fullscreen logic or manual recomposition handling.
+ *
+ * @param videoUrl URL of the video to be streamed (HTTP/HTTPS).
+ * @param title Optional text displayed above the video player.
+ * @param modifier Modifier used to control layout, size, and positioning
+ * of the entire component.
  */
+
 @Composable
 fun NetworkVideoPlayer(
     videoUrl: String,
@@ -33,66 +37,40 @@ fun NetworkVideoPlayer(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    var isFullScreen by remember { mutableStateOf(false) }
 
     val exoPlayer = remember(videoUrl) {
         ExoPlayer.Builder(context).build().apply {
-            val uri = Uri.parse(videoUrl)
-            setMediaItem(MediaItem.fromUri(uri))
+            setMediaItem(MediaItem.fromUri(Uri.parse(videoUrl)))
             prepare()
         }
     }
 
     DisposableEffect(Unit) {
-        onDispose { exoPlayer.release() }
+        onDispose {
+            exoPlayer.release()
+        }
     }
 
     Column(modifier = modifier.fillMaxWidth()) {
+
         if (title.isNotBlank()) {
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(bottom = 8.dp),
-                color = MaterialTheme.colorScheme.onSurface
+                modifier = Modifier.padding(bottom = 8.dp)
             )
         }
 
-        Box(modifier = Modifier.fillMaxWidth()) {
-            AndroidView(
-                factory = {
-                    PlayerView(context).apply {
-                        player = exoPlayer
-                        useController = true
-                        layoutParams = android.view.ViewGroup.LayoutParams(
-                            android.view.ViewGroup.LayoutParams.MATCH_PARENT,
-                            android.view.ViewGroup.LayoutParams.WRAP_CONTENT
-                        )
-                    }
-                },
-                modifier = if (isFullScreen) {
-                    Modifier.fillMaxSize()
-                } else {
-                    Modifier
-                        .fillMaxWidth()
-                        .height(220.dp)
+        AndroidView(
+            factory = {
+                PlayerView(context).apply {
+                    player = exoPlayer
+                    useController = true
                 }
-            )
-
-            IconButton(
-                onClick = { isFullScreen = !isFullScreen },
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(8.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Fullscreen,
-                    contentDescription = "Pełny ekran"
-                )
-            }
-        }
-
-        if (isFullScreen) {
-            BackHandler { isFullScreen = false }
-        }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(220.dp)
+        )
     }
 }

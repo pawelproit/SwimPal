@@ -113,7 +113,7 @@ fun VideoSection() {
                                 Column(modifier = Modifier.padding(12.dp)) {
                                     Text(item.title, fontSize = 18.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
                                     Spacer(modifier = Modifier.height(8.dp))
-                                    NetworkVideoPlayer(videoUrl = item.url, title = item.title, modifier = Modifier.fillMaxWidth())
+                                    NetworkVideoPlayer(videoUrl = item.url, title = "", modifier = Modifier.fillMaxWidth())
                                 }
                             }
                         }
