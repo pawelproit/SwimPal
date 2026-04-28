@@ -76,7 +76,3 @@ cd SwimPal
 ```
 
 **Requirements**: Android Studio, configured Firebase project
-
-## 📄 Academic Documentation
-
-Engineering thesis project at University of Silesia (2026).
