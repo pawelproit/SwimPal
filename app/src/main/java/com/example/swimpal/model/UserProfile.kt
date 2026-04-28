@@ -1,14 +1,14 @@
 package com.example.swimpal.model
 
 /**
- * Represents a user profile stored in Firestore and used across the application.
+ * Represents a user profile.
  *
  * @property uid Unique identifier of the user in Firebase Authentication.
  * @property email Email address associated with the user account.
  * @property firstName User's first name.
  * @property lastName User's last name.
- * @property birthDate User's date of birth stored as a string (for example "yyyy-MM-dd").
- * @property gender User's gender as selected in the profile.
+ * @property birthDate User's date of birth.
+ * @property gender User's gender.
  * @property customCount Number of custom trainings created by the user.
  * @property generatedCount Number of generated trainings created for the user.
  * @property totalCount Total number of trainings (custom + generated).

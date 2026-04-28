@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     id("com.google.gms.google-services")
+    id("org.jetbrains.dokka")
 }
 
 android {
@@ -73,7 +74,7 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.8.3")
 
     implementation("androidx.compose.material3:material3:1.3.0")
-    
+
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.4")
 
     implementation("com.google.firebase:firebase-firestore")

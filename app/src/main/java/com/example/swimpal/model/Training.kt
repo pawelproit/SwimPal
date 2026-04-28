@@ -1,7 +1,7 @@
 package com.example.swimpal.model
 
 /**
- * Represents a complete training plan stored in Firestore.
+ * Represents a training plan stored in Firestore.
  *
  * @property id Unique identifier of the training in the database.
  * @property name Human‑readable name of the training plan.
